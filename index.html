@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#04080d">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jarvis">
+<meta name="description" content="Jarvis — personal home screen">
+<title>Jarvis</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+html, body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+body { padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
+button, .tab, .chip, .send { -webkit-user-select: none; user-select: none; }
+.signin { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid var(--arc); background: rgba(73, 211, 255, 0.08); color: var(--arc-hi); font: 600 11px var(--f-display); letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
+.signin:hover { background: rgba(73, 211, 255, 0.16); }
+.signin:focus-visible { outline: 2px solid var(--arc-hi); outline-offset: 2px; }
+
+/* Layout: arc-reactor day dial + command deck on top; HUD panels in a 12-col grid below. Single dark world by design. */
+:root {
+  color-scheme: dark;
+  --void: #04080d;
+  --panel: rgba(64, 196, 255, 0.035);
+  --line: #143247;
+  --line-soft: #0e2335;
+  --arc: #49d3ff;
+  --arc-hi: #bff2ff;
+  --arc-dim: rgba(73, 211, 255, 0.28);
+  --ink: #d9ecf5;
+  --ink-dim: #7393a6;
+  --ink-faint: #45647a;
+  --green: #5cf0b0;
+  --amber: #ffb84d;
+  --violet: #93a6ff;
+  --red: #ff6170;
+  --f-display: "Oxanium", "Eurostile", "Bank Gothic", system-ui, sans-serif;
+  --f-body: "Barlow", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+html, body { background: var(--void); }
+body {
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.45;
+  background:
+    radial-gradient(ellipse 70% 50% at 25% 0%, rgba(73, 211, 255, 0.09), transparent 70%),
+    linear-gradient(rgba(73, 211, 255, 0.025) 1px, transparent 1px) 0 0 / 100% 32px,
+    linear-gradient(90deg, rgba(73, 211, 255, 0.025) 1px, transparent 1px) 0 0 / 32px 100%,
+    var(--void);
+  min-height: 100%;
+}
+a { color: inherit; }
+.wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-inline: clamp(16px, 3vw, 32px);
+  padding-block: 18px 56px;
+  display: grid;
+  gap: 20px;
+}
+
+/* ---------- top bar ---------- */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; border-bottom: 1px solid var(--line-soft); padding-bottom: 12px; }
+.mark { font-family: var(--f-display); font-weight: 700; font-size: 18px; letter-spacing: 0.42em; color: var(--arc-hi); text-shadow: 0 0 14px rgba(73, 211, 255, 0.55); }
+.mark small { font-family: var(--f-mono); font-weight: 400; font-size: 10px; letter-spacing: 0.18em; color: var(--ink-faint); margin-left: 10px; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); }
+.stat { display: inline-flex; align-items: center; gap: 7px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint); }
+.dot.ok { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.dot.warn { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.dot.off { background: var(--ink-faint); }
+
+/* ---------- hero ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 330px) minmax(0, 1fr); gap: 28px 40px; align-items: center; }
+.dial { width: 100%; max-width: 330px; aspect-ratio: 1; justify-self: center; }
+.dial svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.spin { transform-origin: 150px 150px; animation: spin 60s linear infinite; }
+.spin.rev { animation-duration: 90s; animation-direction: reverse; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 3px; display: inline-block; }
+
+.deck { display: grid; gap: 18px; min-width: 0; }
+.greet { font-family: var(--f-display); font-weight: 600; font-size: clamp(28px, 4.2vw, 44px); line-height: 1.05; letter-spacing: 0.01em; text-wrap: balance; margin: 0; }
+.greet em { font-style: normal; color: var(--arc); text-shadow: 0 0 18px rgba(73, 211, 255, 0.45); }
+.sysline { font-family: var(--f-mono); font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; margin: 6px 0 0; }
+.nextup { display: grid; gap: 8px; }
+.nx { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.nx b { font-family: var(--f-mono); font-weight: 500; font-size: 10px; letter-spacing: 0.16em; padding: 2px 7px; border: 1px solid currentColor; flex: none; }
+.nx.now b { color: var(--arc); box-shadow: 0 0 10px rgba(73, 211, 255, 0.35) inset; }
+.nx.next b { color: var(--ink-dim); }
+.nx span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nx span small { color: var(--ink-dim); font-family: var(--f-mono); font-size: 12px; margin-left: 6px; }
+
+.cmd { display: flex; gap: 0; border: 1px solid var(--arc-dim); background: rgba(73, 211, 255, 0.05); transition: box-shadow .2s, border-color .2s; }
+.cmd:focus-within { border-color: var(--arc); box-shadow: 0 0 0 1px var(--arc), 0 0 22px rgba(73, 211, 255, 0.25); }
+.cmd label { display: flex; align-items: center; padding-left: 14px; color: var(--arc); font-family: var(--f-mono); font-size: 14px; }
+.cmd input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--ink); font: 500 16px var(--f-body); padding: 13px 12px; }
+.cmd input::placeholder { color: var(--ink-faint); }
+.send { display: inline-flex; align-items: center; padding: 0 18px; background: var(--arc); color: #021018; font: 600 12px var(--f-display); letter-spacing: 0.18em; text-transform: uppercase; text-decoration: none; }
+.send:hover { background: var(--arc-hi); }
+.send:focus-visible, .chip:focus-visible, .task:focus-visible, .link:focus-visible, .ghost:focus-visible { outline: 2px solid var(--arc-hi); outline-offset: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; font: 500 13px var(--f-body); background: rgba(73, 211, 255, 0.03); }
+.chip:hover { border-color: var(--arc); color: var(--arc-hi); }
+.chip::before { content: ""; width: 5px; height: 5px; background: var(--arc); transform: rotate(45deg); }
+
+
+/* ---------- tabs ---------- */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { appearance: none; background: transparent; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--ink-dim); font: 600 12px var(--f-display); letter-spacing: 0.2em; text-transform: uppercase; padding: 12px 16px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--arc-hi); border-bottom-color: var(--arc); text-shadow: 0 0 12px rgba(73, 211, 255, 0.5); background: linear-gradient(0deg, rgba(73, 211, 255, 0.08), transparent); }
+.tab:focus-visible { outline: 2px solid var(--arc-hi); outline-offset: -2px; }
+.badge { font: 500 10px var(--f-mono); letter-spacing: 0.04em; padding: 1px 6px; border: 1px solid var(--line); color: var(--ink-dim); text-shadow: none; }
+.badge:empty { display: none; }
+.tab[aria-selected="true"] .badge { border-color: var(--arc); color: var(--arc); }
+.badge.hot, .tab[aria-selected="true"] .badge.hot { border-color: var(--amber); color: var(--amber); }
+.view { display: grid; gap: 20px; }
+.s12 { grid-column: span 12; }
+
+/* ---------- panels ---------- */
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
+.s7 { grid-column: span 7; } .s5 { grid-column: span 5; } .s4 { grid-column: span 4; }
+.panel { position: relative; min-width: 0; background: var(--panel); border: 1px solid var(--line); padding: 16px 18px 18px; display: grid; gap: 12px; align-content: start; }
+.panel::before, .panel::after { content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none; }
+.panel::before { top: -1px; left: -1px; border-top: 2px solid var(--arc); border-left: 2px solid var(--arc); }
+.panel::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--arc); border-right: 2px solid var(--arc); }
+.ph { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.ph h2 { margin: 0; font: 600 13px var(--f-display); letter-spacing: 0.2em; text-transform: uppercase; color: var(--arc-hi); }
+.meta { font-family: var(--f-mono); font-size: 11px; color: var(--ink-dim); letter-spacing: 0.04em; }
+.link { color: var(--ink-dim); font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; border-bottom: 1px solid var(--line); }
+.link:hover { color: var(--arc-hi); border-color: var(--arc); }
+.note { margin: 0; color: var(--ink-dim); font-size: 14px; }
+.notice { margin: 0; padding: 10px 12px; border-left: 2px solid var(--amber); background: rgba(255, 184, 77, 0.06); color: var(--ink); font-size: 14px; }
+.notice button { margin-top: 8px; }
+.ghost { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px dashed var(--arc-dim); color: var(--arc); background: transparent; text-decoration: none; font: 500 13px var(--f-body); cursor: pointer; }
+.ghost:hover { border-style: solid; border-color: var(--arc); }
+.empty { display: grid; gap: 10px; justify-items: start; padding: 6px 0 2px; }
+.empty p { margin: 0; color: var(--ink-dim); font-size: 14px; }
+.sub { font: 500 11px var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin: 4px 0 -4px; }
+
+/* timeline */
+.tl { list-style: none; margin: 0; padding: 0; display: grid; }
+.ev { display: grid; grid-template-columns: 52px 3px minmax(0, 1fr); gap: 0 12px; padding: 8px 0; border-bottom: 1px solid var(--line-soft); align-items: start; }
+.ev:last-child { border-bottom: 0; }
+.ev time { font: 500 13px var(--f-mono); color: var(--ink-dim); font-variant-numeric: tabular-nums; padding-top: 1px; }
+.ev .bar3 { align-self: stretch; background: var(--c, var(--arc)); opacity: .8; }
+.ev .tt { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.ev .tt a { text-decoration: none; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev .tt a:hover { color: var(--arc-hi); }
+.ev .d { color: var(--ink-dim); font-size: 13px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.ev.past { opacity: .42; }
+.ev.now { background: linear-gradient(90deg, rgba(73, 211, 255, 0.10), transparent 70%); }
+.ev.now time { color: var(--arc); }
+.pill { font: 500 9px var(--f-mono); letter-spacing: 0.16em; padding: 1px 6px; border: 1px solid currentColor; flex: none; }
+.pill.now { color: var(--arc); }
+.pill.next { color: var(--ink-dim); }
+
+/* tasks */
+.tasks { list-style: none; margin: 0; padding: 0; display: grid; }
+.task { width: 100%; display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 12px; align-items: start; text-align: left; background: transparent; border: 0; border-bottom: 1px dashed var(--line-soft); color: var(--ink); padding: 9px 0; font: 400 14.5px var(--f-body); cursor: pointer; }
+.tasks li:last-child .task { border-bottom: 0; }
+.task .bx { width: 14px; height: 14px; margin-top: 3px; border: 1px solid var(--arc); position: relative; }
+.task:hover .bx { box-shadow: 0 0 8px rgba(73, 211, 255, 0.5); }
+.task.done .bx { background: var(--arc); }
+.task.done .bx::after { content: ""; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #021018; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.task.done .tx { color: var(--ink-faint); text-decoration: line-through; }
+.task .due { font: 500 11px var(--f-mono); color: var(--ink-dim); padding-top: 2px; white-space: nowrap; }
+.task .due.soon { color: var(--amber); }
+.task .due.late { color: var(--red); }
+.task[disabled] { cursor: progress; opacity: .7; }
+
+/* health */
+.metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.mt { border: 1px solid var(--line-soft); padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.mt span { font: 500 10px var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
+.mt strong { font: 600 18px var(--f-display); white-space: nowrap; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.mt strong small { font: 400 12px var(--f-mono); color: var(--ink-dim); margin-left: 4px; }
+.train { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid var(--arc-dim); background: rgba(92, 240, 176, 0.04); }
+.train span { font: 500 10px var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
+.train strong { font: 600 16px var(--f-display); color: var(--green); text-align: right; }
+.meter { height: 6px; background: var(--line-soft); position: relative; }
+.meter i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--arc), var(--green)); box-shadow: 0 0 10px rgba(92, 240, 176, 0.5); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font: 500 12px var(--f-body); padding: 3px 9px; border: 1px solid var(--line); color: var(--ink-dim); }
+
+/* inbox */
+.big { display: flex; align-items: baseline; gap: 10px; }
+.big strong { font: 700 42px var(--f-display); line-height: 1; color: var(--arc); text-shadow: 0 0 18px rgba(73, 211, 255, 0.35); font-variant-numeric: tabular-nums; }
+.big span { color: var(--ink-dim); font-size: 14px; }
+.mail { list-style: none; margin: 0; padding: 0; display: grid; }
+.mail li { border-bottom: 1px solid var(--line-soft); }
+.mail li:last-child { border-bottom: 0; }
+.mail a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 8px 0; text-decoration: none; }
+.mail a:hover .who { color: var(--arc-hi); }
+.mail .who { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mail .when { font: 500 11px var(--f-mono); color: var(--ink-dim); padding-top: 2px; }
+.mail .subj { grid-column: 1 / -1; color: var(--ink-dim); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.foot { font-family: var(--f-mono); font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: space-between; border-top: 1px solid var(--line-soft); padding-top: 12px; }
+.foot a { color: var(--ink-dim); }
+
+@media (max-width: 1040px) {
+  .s7, .s5 { grid-column: span 12; }
+  .s4 { grid-column: span 6; }
+  .three .s4:last-child { grid-column: span 12; }
+}
+@media (max-width: 760px) {
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .dial { max-width: 290px; }
+  .s4 { grid-column: span 12; }
+  .send { padding: 0 12px; letter-spacing: 0.12em; }
+  .tab { padding: 11px 11px 9px; letter-spacing: 0.12em; font-size: 11px; }
+}
+
+.short { display: none; }
+@media (max-width: 760px) {
+  .wrap { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; justify-content: space-around; gap: 0; overflow: visible; background: rgba(4, 8, 13, 0.94); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom: 0; border-top: 1px solid var(--line); padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+  .tab { flex: 1 1 0; flex-direction: column; gap: 5px; padding: 11px 4px 10px; margin: 0; font-size: 10.5px; letter-spacing: 0.12em; border-bottom: 0; border-top: 2px solid transparent; }
+  .tab[aria-selected="true"] { border-top-color: var(--arc); background: linear-gradient(180deg, rgba(73, 211, 255, 0.10), transparent); }
+  .full { display: none; }
+  .short { display: inline; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; }
+  * { transition: none !important; }
+}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <div class="mark">J.A.R.V.I.S.<small>PERSONAL SYSTEM</small></div>
+    <div class="stats" aria-live="polite">
+      <span class="stat"><i class="dot off" id="st-cal"></i><span id="st-cal-t">Calendar</span></span>
+      <span class="stat"><i class="dot off" id="st-mail"></i><span id="st-mail-t">Inbox</span></span>
+      <span class="stat"><i class="dot off" id="st-hub"></i><span id="st-hub-t">Hub</span></span>
+      <button class="signin" type="button" id="signin" hidden>Sign in with Google</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Jarvis sections" id="tabs">
+    <button class="tab" type="button" role="tab" id="tab-command" aria-controls="view-command" data-view="command">Command<span class="badge" id="b-command"></span></button>
+    <button class="tab" type="button" role="tab" id="tab-health" aria-controls="view-health" data-view="health">Health<span class="badge" id="b-health"></span></button>
+    <button class="tab" type="button" role="tab" id="tab-business" aria-controls="view-business" data-view="business">Business<span class="badge" id="b-business"></span></button>
+    <button class="tab" type="button" role="tab" id="tab-inbox" aria-controls="view-inbox" data-view="inbox"><span class="full">Inbox &amp; Bills</span><span class="short">Inbox</span><span class="badge" id="b-inbox"></span></button>
+  </nav>
+
+  <div class="view" id="view-command" role="tabpanel" aria-labelledby="tab-command">
+    <section class="hero">
+      <div>
+        <div class="dial" id="dial" role="img" aria-label="Today's schedule on a 24-hour dial"></div>
+        <div class="legend" aria-hidden="true">
+          <span><i style="background:var(--green)"></i>Train</span>
+          <span><i style="background:var(--amber)"></i>Food</span>
+          <span><i style="background:var(--arc)"></i>Work</span>
+          <span><i style="background:var(--violet)"></i>Other</span>
+        </div>
+      </div>
+      <div class="deck">
+        <div>
+          <h1 class="greet" id="greet">Good evening, <em>sir.</em></h1>
+          <p class="sysline" id="sysline">Bringing systems online…</p>
+        </div>
+        <div class="nextup" id="nextup"></div>
+        <form class="cmd" id="cmd" autocomplete="off">
+          <label for="cmd-in" aria-hidden="true">&gt;_</label>
+          <input id="cmd-in" name="q" type="text" placeholder="Tell Jarvis what to do…" aria-label="Tell Jarvis what to do">
+          <a class="send" id="cmd-go" href="https://claude.ai/new" target="_blank" rel="noopener">Send</a>
+        </form>
+        <div class="chips" id="chips"></div>
+      </div>
+    </section>
+    <section class="grid">
+      <article class="panel s7">
+        <div class="ph"><h2>Timeline</h2><span class="meta" id="tl-meta"></span></div>
+        <div id="tl-body"></div>
+      </article>
+      <article class="panel s5">
+        <div class="ph"><h2>Today's missions</h2><a class="link" id="hub-link-1" target="_blank" rel="noopener">Open hub</a></div>
+        <div id="today-body"></div>
+      </article>
+    </section>
+  </div>
+
+  <div class="view" id="view-health" role="tabpanel" aria-labelledby="tab-health" hidden>
+    <section class="grid">
+      <article class="panel s5">
+        <div class="ph"><h2>Body</h2><span class="meta">Fat loss · muscle · recovery</span></div>
+        <div id="health-body"></div>
+      </article>
+      <article class="panel s7">
+        <div class="ph"><h2>Daily routine</h2><a class="link" id="hub-link-2" target="_blank" rel="noopener">Open hub</a></div>
+        <div id="routine-body"></div>
+      </article>
+      <article class="panel s12">
+        <div class="ph"><h2>Training &amp; fuel today</h2><span class="meta" id="fuel-meta"></span></div>
+        <div id="fuel-body"></div>
+      </article>
+    </section>
+  </div>
+
+  <div class="view" id="view-business" role="tabpanel" aria-labelledby="tab-business" hidden>
+    <section class="grid three">
+      <article class="panel s4">
+        <div class="ph"><h2>Marketing agency</h2><span class="meta">Lead-gen</span></div>
+        <div id="marketing-body"></div>
+      </article>
+      <article class="panel s4">
+        <div class="ph"><h2>Music</h2><span class="meta">Label &amp; releases</span></div>
+        <div id="music-body"></div>
+      </article>
+      <article class="panel s4">
+        <div class="ph"><h2>AI agency</h2><span class="meta">Real estate</span></div>
+        <div id="ai-body"></div>
+      </article>
+    </section>
+  </div>
+
+  <div class="view" id="view-inbox" role="tabpanel" aria-labelledby="tab-inbox" hidden>
+    <section class="grid">
+      <article class="panel s7">
+        <div class="ph"><h2>Inbox</h2><a class="link" href="https://mail.google.com/mail/u/0/#inbox" target="_blank" rel="noopener">Gmail</a></div>
+        <div id="mail-body"></div>
+      </article>
+      <article class="panel s5">
+        <div class="ph"><h2>Bills &amp; dates</h2><span class="meta">Track and remind only</span></div>
+        <div id="bills-body"></div>
+      </article>
+    </section>
+  </div>
+
+  <footer class="foot">
+    <span id="foot-sync">Hub not synced yet</span>
+    <span>Drafts only · never sends · never touches money</span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- config ----------
+  const HUB_URL = "https://claude.ai/code/artifact/af085870-642b-4c1b-b313-6b900af7ddf4";
+  const DASH_URL = "https://claude.ai/artifact/QBQDHi1PAzbqsvQ35fhHs1";
+  const PLAN = {
+    protein: "170–190", kcal: "2,000–2,200",
+    startKg: 100, goalKg: [82, 86],
+    supps: ["Lion's Mane", "Magnesium", "Creatine"]
+  };
+  const CAL = "Google Calendar", MAIL = "Gmail";
+  const CFG = Object.assign({ googleClientId: "", sheetId: "" }, window.JARVIS_CONFIG || {});
+  const MAIL_QUERY = "is:unread in:inbox category:primary newer_than:3d";
+
+  const dashRef = "my Jarvis app (its Google Sheet, tab Tasks)";
+  const ask = (p) => "https://claude.ai/new?q=" + encodeURIComponent("[Jarvis] " + p);
+
+  // ---------- state ----------
+  const S = { now: new Date(), cal: null, calErr: null, calStale: false, mail: null, mailErr: null, hub: null, hubErr: null, saving: new Set() };
+  let dayKey = "";
+
+  // ---------- helpers ----------
+  const $ = (id) => document.getElementById(id);
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    if (attrs) for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k === "style") el.setAttribute("style", v);
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    return el;
+  }
+  const pad = (n) => String(n).padStart(2, "0");
+  const localISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+  const hm = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const hrs = (d) => d.getHours() + d.getMinutes() / 60;
+  const keyOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  function dur(ms) {
+    const m = Math.max(0, Math.round(ms / 60000));
+    if (m < 60) return `${m}m`;
+    const hh = Math.floor(m / 60), mm = m % 60;
+    return mm ? `${hh}h ${mm}m` : `${hh}h`;
+  }
+  function ago(d) {
+    const m = Math.round((S.now - d) / 60000);
+    if (m < 1) return "now";
+    if (m < 60) return `${m}m`;
+    if (m < 60 * 24 && keyOf(d) === keyOf(S.now)) return hm(d);
+    const y = new Date(S.now); y.setDate(y.getDate() - 1);
+    if (keyOf(d) === keyOf(y)) return "Yday";
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  }
+  function category(title) {
+    const t = (title || "").toLowerCase();
+    if (/workout|gym|strength|calisthen|yoga|walk|stretch|run|train|sauna|swim|bike/.test(t)) return "move";
+    if (/breakfast|lunch|dinner|snack|meal|protein|eat/.test(t)) return "food";
+    if (/work|hustler|study|universit|client|call|meeting|studio|music/.test(t)) return "work";
+    return "other";
+  }
+  const CAT_COLOR = { move: "var(--green)", food: "var(--amber)", work: "var(--arc)", other: "var(--violet)" };
+  const CAT_HEX = { move: "#5cf0b0", food: "#ffb84d", work: "#49d3ff", other: "#93a6ff" };
+  function errCopy(server, e) {
+    switch (e && e.code) {
+      case "needs_reauth": return `Sign in with Google to load ${server}.`;
+      case "forbidden": return `${server} access wasn't allowed. Sign in again and tick every box Google shows.`;
+      case "server_unavailable": return `${server} isn't reachable right now. Jarvis retries every few minutes.`;
+      case "no_sheet": return "The task sheet isn't connected yet.";
+      default: return (e && e.message) ? `${server}: ${e.message}` : `${server} couldn't load.`;
+    }
+  }
+  const canSignIn = (e) => !!CFG.googleClientId && !!e && (e.code === "needs_reauth" || e.code === "forbidden");
+
+  // ---------- events ----------
+  function events() {
+    const list = (S.cal && Array.isArray(S.cal.events)) ? S.cal.events : [];
+    return list.filter((e) => e && e.status !== "cancelled").map((e) => {
+      const allDay = !!(e.start && e.start.date && !e.start.dateTime);
+      const start = allDay ? new Date(e.start.date + "T00:00:00") : new Date(e.start && e.start.dateTime);
+      const end = allDay ? new Date((e.end && e.end.date ? e.end.date : e.start.date) + "T00:00:00") : new Date(e.end && e.end.dateTime || start);
+      return { title: e.summary || "(untitled)", desc: (e.description || "").replace(/\s+/g, " ").trim(), link: e.htmlLink, start, end, allDay, cat: category(e.summary) };
+    }).filter((e) => !isNaN(e.start)).sort((a, b) => a.start - b.start);
+  }
+  function nowNext(evs) {
+    const t = S.now;
+    const timed = evs.filter((e) => !e.allDay);
+    const now = timed.filter((e) => e.start <= t && e.end > t).pop() || null;
+    const next = timed.find((e) => e.start > t) || null;
+    return { now, next, left: timed.filter((e) => e.end > t).length };
+  }
+
+  // ---------- dial ----------
+  const NS = "http://www.w3.org/2000/svg";
+  const sv = (tag, attrs) => { const el = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs || {})) if (v != null) el.setAttribute(k, v); return el; };
+  const polar = (r, hr) => { const a = (hr / 24) * Math.PI * 2 - Math.PI / 2; return [150 + r * Math.cos(a), 150 + r * Math.sin(a)]; };
+  function arcD(r, h1, h2) {
+    const [x1, y1] = polar(r, h1), [x2, y2] = polar(r, h2);
+    const large = (h2 - h1) > 12 ? 1 : 0;
+    return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+  }
+  let dyn = null, svgRoot = null;
+  function buildDial() {
+    const svg = sv("svg", { viewBox: "0 0 300 300", "aria-hidden": "true" });
+    const defs = sv("defs");
+    const f = sv("filter", { id: "glow", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+    f.append(sv("feGaussianBlur", { stdDeviation: "2.4", result: "b" }));
+    const m = sv("feMerge"); m.append(sv("feMergeNode", { in: "b" }), sv("feMergeNode", { in: "SourceGraphic" }));
+    f.append(m); defs.append(f);
+    const rg = sv("radialGradient", { id: "core" });
+    rg.append(sv("stop", { offset: "0%", "stop-color": "#49d3ff", "stop-opacity": "0.22" }), sv("stop", { offset: "100%", "stop-color": "#49d3ff", "stop-opacity": "0" }));
+    defs.append(rg);
+    svg.append(defs);
+    svg.append(sv("circle", { cx: 150, cy: 150, r: 96, fill: "url(#core)" }));
+    // hour ticks
+    const ticks = sv("g");
+    for (let i = 0; i < 96; i++) {
+      const hr = i / 4, major = i % 24 === 0, hour = i % 4 === 0;
+      const [x1, y1] = polar(hour ? 131 : 135, hr), [x2, y2] = polar(141, hr);
+      ticks.append(sv("line", { x1, y1, x2, y2, stroke: major ? "#bff2ff" : (hour ? "#49d3ff" : "#143247"), "stroke-width": major ? 2 : 1, opacity: hour ? 0.9 : 1 }));
+    }
+    svg.append(ticks);
+    [["00", 0], ["06", 6], ["12", 12], ["18", 18]].forEach(([t, hr]) => {
+      const [x, y] = polar(121, hr);
+      const tx = sv("text", { x, y, "text-anchor": "middle", "dominant-baseline": "central", fill: "#7393a6", "font-family": "IBM Plex Mono, monospace", "font-size": "9", "letter-spacing": "1" });
+      tx.textContent = t; svg.append(tx);
+    });
+    svg.append(sv("circle", { cx: 150, cy: 150, r: 104, fill: "none", stroke: "#0e2335", "stroke-width": 12 }));
+    const s1 = sv("g", { class: "spin" });
+    s1.append(sv("circle", { cx: 150, cy: 150, r: 84, fill: "none", stroke: "#49d3ff", "stroke-opacity": "0.35", "stroke-width": 1, "stroke-dasharray": "2 6" }));
+    const s2 = sv("g", { class: "spin rev" });
+    s2.append(sv("circle", { cx: 150, cy: 150, r: 146, fill: "none", stroke: "#49d3ff", "stroke-opacity": "0.25", "stroke-width": 1, "stroke-dasharray": "40 14 4 14" }));
+    svg.append(s1, s2);
+    svg.append(sv("circle", { cx: 150, cy: 150, r: 76, fill: "none", stroke: "#143247", "stroke-width": 1 }));
+    dyn = sv("g"); svg.append(dyn);
+    svgRoot = svg;
+    $("dial").append(svg);
+  }
+  function renderDial(evs) {
+    if (!dyn) return;
+    dyn.replaceChildren();
+    const t = S.now, nowH = hrs(t);
+    const timed = evs.filter((e) => !e.allDay);
+    for (const e of timed) {
+      let a = keyOf(e.start) === keyOf(t) ? hrs(e.start) : 0;
+      let b = keyOf(e.end) === keyOf(t) ? hrs(e.end) : 24;
+      if (b <= a) continue;
+      if (b - a > 0.15) { a += 0.04; b -= 0.04; }
+      const live = e.start <= t && e.end > t, past = e.end <= t;
+      dyn.append(sv("path", { d: arcD(104, a, b), fill: "none", stroke: CAT_HEX[e.cat], "stroke-width": live ? 14 : 10, opacity: past ? 0.45 : (live ? 1 : 0.85), filter: live ? "url(#glow)" : null }));
+    }
+    // day progress on inner ring
+    if (timed.length) {
+      const first = hrs(timed[0].start), last = Math.max(...timed.map((e) => keyOf(e.end) === keyOf(t) ? hrs(e.end) : 24));
+      const p = Math.min(Math.max(nowH, first), last);
+      dyn.append(sv("path", { d: arcD(90, first, last), fill: "none", stroke: "#143247", "stroke-width": 3 }));
+      if (p > first + 0.01) dyn.append(sv("path", { d: arcD(90, first, p), fill: "none", stroke: "#49d3ff", "stroke-width": 3, filter: "url(#glow)" }));
+    }
+    // now hand
+    const [hx1, hy1] = polar(78, nowH), [hx2, hy2] = polar(144, nowH), [dx, dy] = polar(104, nowH);
+    dyn.append(sv("line", { x1: hx1, y1: hy1, x2: hx2, y2: hy2, stroke: "#bff2ff", "stroke-width": 1.5, filter: "url(#glow)" }));
+    dyn.append(sv("circle", { cx: dx, cy: dy, r: 4, fill: "#04080d", stroke: "#bff2ff", "stroke-width": 2 }));
+    // center
+    const time = sv("text", { x: 150, y: 140, "text-anchor": "middle", fill: "#d9ecf5", "font-family": "Oxanium, sans-serif", "font-weight": "600", "font-size": "42", "letter-spacing": "1" });
+    time.textContent = hm(t);
+    const date = sv("text", { x: 150, y: 166, "text-anchor": "middle", fill: "#49d3ff", "font-family": "IBM Plex Mono, monospace", "font-size": "10", "letter-spacing": "2.5" });
+    date.textContent = t.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" }).toUpperCase().replace(",", "");
+    const left = sv("text", { x: 150, y: 184, "text-anchor": "middle", fill: "#7393a6", "font-family": "IBM Plex Mono, monospace", "font-size": "9", "letter-spacing": "1.5" });
+    const nn = nowNext(evs);
+    left.textContent = S.cal ? `${nn.left} BLOCK${nn.left === 1 ? "" : "S"} LEFT` : "CALENDAR OFFLINE";
+    dyn.append(time, date, left);
+    $("dial").setAttribute("aria-label", `Today's schedule on a 24-hour dial. ${S.cal ? nn.left + " blocks left today." : ""}`);
+  }
+
+  // ---------- hero ----------
+  function renderHero(evs) {
+    const hr = S.now.getHours();
+    const g = hr < 5 ? "Late night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : hr < 22 ? "Good evening" : "Good night";
+    $("greet").replaceChildren(g + ", ", h("em", { text: "sir." }));
+    const nn = nowNext(evs);
+    const parts = [];
+    if (S.cal) parts.push(`${nn.left} calendar block${nn.left === 1 ? "" : "s"} left`);
+    if (S.mail) parts.push(`${mailCount()} unread in Primary`);
+    const tasks = openCount("today");
+    if (tasks != null) parts.push(`${tasks} mission${tasks === 1 ? "" : "s"} open`);
+    $("sysline").textContent = parts.length ? parts.join("  ·  ") : (!CFG.googleClientId ? "Almost ready: the Google sign-in key isn't set up yet." : !AUTH.ok ? "Sign in with Google to bring systems online." : "Bringing systems online…");
+    const box = $("nextup"); box.replaceChildren();
+    if (!S.cal) return;
+    if (nn.now) box.append(h("div", { class: "nx now" }, h("b", { text: "NOW" }), h("span", null, nn.now.title, h("small", { text: `until ${hm(nn.now.end)}` }))));
+    if (nn.next) box.append(h("div", { class: "nx next" }, h("b", { text: "NEXT" }), h("span", null, nn.next.title, h("small", { text: `${hm(nn.next.start)} · in ${dur(nn.next.start - S.now)}` }))));
+    if (!nn.now && !nn.next) box.append(h("div", { class: "nx next" }, h("b", { text: "CLEAR" }), h("span", { text: "Nothing else on the calendar today." })));
+  }
+  function renderChips() {
+    const c = $("chips"); c.replaceChildren();
+    const chips = [
+      ["Plan my day", `Look at today's Google Calendar and my Jarvis Hub (${HUB_URL}), then give me today's plan and the 3 things that matter most.`],
+      ["Triage my inbox", "Go through my unread Gmail from the last 3 days. Tell me what actually needs me and draft replies for those. Don't send anything."],
+      ["Add a task", `Add a task to my Jarvis Hub (${HUB_URL}) and sync ${dashRef}. The task: `],
+      ["Sync now", `Sync ${dashRef} from my Jarvis Hub (${HUB_URL}) the same way the morning brief does, so the app shows my latest lists.`]
+    ];
+    for (const [label, p] of chips) c.append(h("a", { class: "chip", href: ask(p), target: "_blank", rel: "noopener", text: label }));
+  }
+  function wireCmd() {
+    const input = $("cmd-in"), go = $("cmd-go"), form = $("cmd");
+    const sync = () => { const v = input.value.trim(); go.href = v ? ask(v) : "https://claude.ai/new"; };
+    input.addEventListener("input", sync);
+    form.addEventListener("submit", (e) => { e.preventDefault(); sync(); if (input.value.trim()) go.click(); });
+    go.addEventListener("click", () => { sync(); setTimeout(() => { input.value = ""; sync(); }, 300); });
+  }
+
+  // ---------- timeline ----------
+  function renderCal(bodyId, metaId, evs, noun, emptyText) {
+    const body = $(bodyId); body.replaceChildren();
+    const meta = $(metaId);
+    if (S.calErr && !S.cal) {
+      meta.textContent = "";
+      body.append(notice(errCopy(CAL, S.calErr), canSignIn(S.calErr) ? () => signIn(false) : null, "Sign in with Google"));
+      return;
+    }
+    if (!S.cal) { meta.textContent = ""; body.append(h("p", { class: "note", text: !AUTH.ok ? "Sign in with Google to load today's calendar." : "Loading today's calendar…" })); return; }
+    meta.textContent = `${evs.length} ${noun}${evs.length === 1 ? "" : "s"} today` + (S.calStale ? " · showing last data" : "");
+    if (!evs.length) { body.append(h("p", { class: "note", text: emptyText })); return; }
+    const nn = nowNext(evs);
+    const ul = h("ul", { class: "tl" });
+    for (const e of evs) {
+      const isNow = e === nn.now, isNext = e === nn.next, past = !e.allDay && e.end <= S.now;
+      const sub = e.allDay ? "All day" : `${hm(e.start)}–${hm(e.end)} · ${dur(e.end - e.start)}`;
+      ul.append(h("li", { class: "ev" + (isNow ? " now" : "") + (past ? " past" : ""), style: `--c:${CAT_COLOR[e.cat]}` },
+        h("time", { text: e.allDay ? "ALL" : hm(e.start) }),
+        h("span", { class: "bar3" }),
+        h("div", null,
+          h("div", { class: "tt" }, e.link ? h("a", { href: e.link, target: "_blank", rel: "noopener", text: e.title, dir: "auto" }) : h("span", { text: e.title, dir: "auto" }), isNow ? h("span", { class: "pill now", text: "NOW" }) : null, isNext ? h("span", { class: "pill next", text: "NEXT" }) : null),
+          h("div", { class: "d", text: e.desc ? `${sub} — ${e.desc}` : sub, dir: "auto" }))));
+    }
+    body.append(ul);
+  }
+  const renderTimeline = (evs) => renderCal("tl-body", "tl-meta", evs, "event", "Nothing on the calendar today.");
+  const renderFuel = (evs) => renderCal("fuel-body", "fuel-meta", evs.filter((e) => e.cat === "move" || e.cat === "food"), "block", "No training or meals on the calendar today.");
+  function notice(text, action, label) {
+    const n = h("div", { class: "notice" }, h("div", { text }));
+    if (action) n.append(h("button", { class: "ghost", type: "button", onclick: action, text: label }));
+    return n;
+  }
+
+  // ---------- inbox ----------
+  function mailCount() {
+    const t = (S.mail && Array.isArray(S.mail.threads)) ? S.mail.threads.length : 0;
+    const est = S.mail && Number(S.mail.resultCountEstimate);
+    return est && est > t ? est : t;
+  }
+  function senderName(s) {
+    if (!s) return "Unknown sender";
+    const m = s.match(/^\s*"?([^"<]+?)"?\s*<[^>]+>\s*$/);
+    if (m) return m[1].trim();
+    return s.includes("@") ? s.split("@")[0] : s;
+  }
+  function renderMail() {
+    const body = $("mail-body"); body.replaceChildren();
+    if (S.mailErr && !S.mail) { body.append(notice(errCopy(MAIL, S.mailErr), canSignIn(S.mailErr) ? () => signIn(false) : null, "Sign in with Google")); return; }
+    if (!S.mail) { body.append(h("p", { class: "note", text: !AUTH.ok ? "Sign in with Google to see unread Primary email." : "Checking your inbox…" })); return; }
+    const n = mailCount();
+    body.append(h("div", { class: "big" }, h("strong", { text: String(n) }), h("span", { text: n === 1 ? "unread in Primary, last 3 days" : "unread in Primary, last 3 days" })));
+    const threads = (S.mail.threads || []).slice(0, 5);
+    if (!threads.length) { body.append(h("p", { class: "note", text: "Inbox is clear." })); return; }
+    const ul = h("ul", { class: "mail" });
+    for (const th of threads) {
+      const msgs = th.messages || [], m = msgs[msgs.length - 1] || {};
+      const d = m.date ? new Date(m.date) : null;
+      ul.append(h("li", null, h("a", { href: th.viewUrl || m.viewUrl || "https://mail.google.com/", target: "_blank", rel: "noopener" },
+        h("span", { class: "who", text: senderName(m.sender), dir: "auto" }),
+        h("span", { class: "when", text: d && !isNaN(d) ? ago(d) : "" }),
+        h("span", { class: "subj", text: m.subject || "(no subject)", dir: "auto" }))));
+    }
+    body.append(ul);
+    body.append(h("a", { class: "ghost", href: ask("Go through my unread Gmail from the last 3 days. Tell me what actually needs me and draft replies for those. Don't send anything."), target: "_blank", rel: "noopener", text: "Draft replies with Jarvis" }));
+  }
+
+  // ---------- hub sections ----------
+  const SECTIONS = {
+    today: { name: "Today", empty: "Jarvis fills this every morning at 06:15 from your hub and calendar." },
+    health: { name: "Health & Routine", empty: "No routine items loaded yet." },
+    marketing: { name: "Marketing Agency", empty: "No missions loaded for the agency yet." },
+    music: { name: "Music", empty: "No missions loaded for music yet." },
+    ai: { name: "AI Agency", empty: "No missions loaded for the AI agency yet." },
+    hu: { name: "Hustler's University" },
+    bills: { name: "Bills & Dates", empty: "No bills or dates tracked yet." }
+  };
+  const realItems = (doc) => (doc && Array.isArray(doc.items) ? doc.items : []).filter((it) => it && typeof it.text === "string" && it.text.trim() && !/^\(.*\)$/.test(it.text.trim()));
+  function openCount(key) { if (!S.hub) return null; return realItems(S.hub[key]).filter((it) => !it.done).length; }
+  function dueInfo(due) {
+    if (!due || !/^\d{4}-\d{2}-\d{2}$/.test(due)) return null;
+    const d = new Date(due + "T00:00:00"), t = new Date(keyOf(S.now) + "T00:00:00");
+    const days = Math.round((d - t) / 86400000);
+    const label = days < 0 ? `${-days}d late` : days === 0 ? "Today" : days === 1 ? "Tomorrow" : days < 7 ? `In ${days}d` : d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    return { label, cls: days < 0 ? "late" : days <= 3 ? "soon" : "" };
+  }
+  function taskList(key) {
+    const doc = S.hub && S.hub[key];
+    const items = realItems(doc);
+    const ul = h("ul", { class: "tasks" });
+    const busy = S.saving.has(key);
+    items.forEach((it) => {
+      const idx = doc.items.indexOf(it);
+      const di = dueInfo(it.due);
+      ul.append(h("li", null, h("button", { class: "task" + (it.done ? " done" : ""), type: "button", disabled: busy || !AUTH.ok, "aria-pressed": it.done ? "true" : "false", onclick: () => toggle(key, idx) },
+        h("span", { class: "bx", "aria-hidden": "true" }),
+        h("span", { class: "tx", text: it.text, dir: "auto" }),
+        di ? h("span", { class: "due " + di.cls, text: di.label }) : h("span"))));
+    });
+    return { ul, count: items.length };
+  }
+  function hubState(body) {
+    if (S.hubErr && !S.hub) { body.append(notice(errCopy("Your task sheet", S.hubErr), canSignIn(S.hubErr) ? () => signIn(false) : null, "Sign in with Google")); return false; }
+    if (!S.hub) { body.append(h("p", { class: "note", text: !AUTH.ok ? "Sign in with Google to load your lists." : "Loading your lists…" })); return false; }
+    return true;
+  }
+  function renderSection(key, bodyId, addPrompt) {
+    const body = $(bodyId); body.replaceChildren();
+    if (!hubState(body)) return;
+    const doc = S.hub[key];
+    const { ul, count } = taskList(key);
+    if (count) { body.append(ul); }
+    else {
+      const e = h("div", { class: "empty" }, h("p", { text: SECTIONS[key].empty || "Nothing here yet." }));
+      if (addPrompt) e.append(h("a", { class: "ghost", href: ask(addPrompt), target: "_blank", rel: "noopener", text: "Add with Jarvis" }));
+      body.append(e);
+    }
+    return doc;
+  }
+  function renderBusiness(key, bodyId, label, extraKey) {
+    renderSection(key, bodyId, `Add tasks to the ${label} section of my Jarvis Hub (${HUB_URL}) and sync ${dashRef}. Here's what's on my plate: `);
+    if (extraKey && S.hub && realItems(S.hub[extraKey]).length) {
+      const body = $(bodyId);
+      body.append(h("div", { class: "sub", text: SECTIONS[extraKey].name }));
+      body.append(taskList(extraKey).ul);
+    }
+  }
+  async function toggle(key, idx) {
+    if (!AUTH.ok || S.saving.has(key)) return;
+    const doc = S.hub && S.hub[key];
+    const it = doc && Array.isArray(doc.items) ? doc.items[idx] : null;
+    if (!it || !it.row) return;
+    it.done = !it.done;
+    S.saving.add(key); renderAll();
+    try {
+      await gapi(`https://sheets.googleapis.com/v4/spreadsheets/${CFG.sheetId}/values/${encodeURIComponent("Tasks!C" + it.row)}?valueInputOption=USER_ENTERED`,
+        { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ values: [[it.done ? "TRUE" : "FALSE"]] }) });
+    } catch (e) {
+      it.done = !it.done;
+      flash(key, e && e.code === "needs_reauth" ? "Sign in again to save ticks." : "Couldn't save that tick. Try again in a moment.");
+    } finally { S.saving.delete(key); renderAll(); }
+  }
+  function flash(key, msg) {
+    const map = { today: "today-body", health: "routine-body", marketing: "marketing-body", music: "music-body", ai: "ai-body", hu: "ai-body", bills: "bills-body" };
+    const body = $(map[key]); if (!body) return;
+    const n = h("p", { class: "notice", text: msg }); body.prepend(n); setTimeout(() => n.remove(), 4000);
+  }
+
+  // ---------- health ----------
+  function trainingToday(evs) {
+    if (!S.cal) return "—";
+    const titles = evs.map((e) => e.title.toLowerCase());
+    if (titles.some((t) => /strength|gym/.test(t))) return "Strength · gym";
+    if (titles.some((t) => /calisthen/.test(t))) return "Calisthenics · home";
+    if (titles.some((t) => /run|bike|swim|cardio/.test(t))) return "Cardio";
+    return "Rest · mobility + sauna";
+  }
+  function renderHealth(evs) {
+    const body = $("health-body"); body.replaceChildren();
+    body.append(h("div", { class: "train" }, h("span", { text: "Training today" }), h("strong", { text: trainingToday(evs) })));
+    const st = S.hub && S.hub.stats;
+    const w = st && Number.isFinite(st.weightKg) && st.weightKg > 0 ? st.weightKg : null;
+    const goalMid = (PLAN.goalKg[0] + PLAN.goalKg[1]) / 2;
+    body.append(h("div", { class: "metrics" },
+      h("div", { class: "mt" }, h("span", { text: "Protein" }), h("strong", null, PLAN.protein, h("small", { text: "g" }))),
+      h("div", { class: "mt" }, h("span", { text: "Calories · kcal" }), h("strong", { text: PLAN.kcal })),
+      h("div", { class: "mt" }, h("span", { text: w ? "Weight · " + (st.measuredOn || "latest") : "Start weight" }), h("strong", null, String(w || PLAN.startKg), h("small", { text: "kg" }))),
+      h("div", { class: "mt" }, h("span", { text: "Goal" }), h("strong", null, `${PLAN.goalKg[0]}–${PLAN.goalKg[1]}`, h("small", { text: "kg" })))));
+    if (w) {
+      const pct = Math.max(0, Math.min(1, (PLAN.startKg - w) / (PLAN.startKg - goalMid)));
+      body.append(h("div", { class: "meter", role: "img", "aria-label": `${Math.round(pct * 100)}% of the way to goal` }, h("i", { style: `width:${(pct * 100).toFixed(1)}%` })));
+    }
+    body.append(h("div", { class: "tags" }, PLAN.supps.map((s) => h("span", { class: "tag", text: s }))));
+  }
+
+  // ---------- render ----------
+  function renderHubPanels() {
+    renderSection("today", "today-body", `Add a task to the Today list in my Jarvis Hub (${HUB_URL}) and sync ${dashRef}. The task: `);
+    renderHealth(events());
+    renderSection("health", "routine-body", `Add an item to the Health & Routine list in my Jarvis Hub (${HUB_URL}) and sync ${dashRef}. The item: `);
+    renderBusiness("marketing", "marketing-body", "Marketing Agency");
+    renderBusiness("music", "music-body", "Music");
+    renderBusiness("ai", "ai-body", "AI Agency", "hu");
+    renderSection("bills", "bills-body", `Start tracking my bills and due dates in my Jarvis Hub (${HUB_URL}) and sync ${dashRef}. Here are my regular bills and when they're due: `);
+    const meta = S.hub && S.hub.meta;
+    const synced = meta && meta.syncedAt ? new Date(meta.syncedAt) : null;
+    $("foot-sync").textContent = synced && !isNaN(synced) ? `Hub snapshot synced ${synced.toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" })}` : "Hub snapshot not synced yet · runs daily 06:15";
+  }
+  function renderStatus() {
+    const set = (id, cls, txt) => { $(id).className = "dot " + cls; $(id + "-t").textContent = txt; };
+    set("st-cal", S.cal ? (S.calStale ? "warn" : "ok") : (S.calErr ? "warn" : "off"), S.cal ? "Calendar live" : (S.calErr ? "Calendar needs you" : "Calendar"));
+    set("st-mail", S.mail ? "ok" : (S.mailErr ? "warn" : "off"), S.mail ? "Inbox live" : (S.mailErr ? "Inbox needs you" : "Inbox"));
+    const synced = S.hub && S.hub.meta && S.hub.meta.syncedAt;
+    set("st-hub", S.hub ? (synced ? "ok" : "warn") : "off", S.hub ? (synced ? "Hub synced" : "Hub not synced") : "Hub");
+    $("signin").hidden = AUTH.ok || !CFG.googleClientId;
+  }
+  function renderBadges() {
+    const set = (id, n, extra, hot) => { const b = $(id); b.textContent = (n ? String(n) : "") + (extra || ""); b.classList.toggle("hot", !!hot); };
+    if (S.hub) {
+      set("b-command", openCount("today"));
+      set("b-health", openCount("health"));
+      set("b-business", ["marketing", "music", "ai", "hu"].reduce((a, k) => a + openCount(k), 0));
+    }
+    const due = S.hub ? realItems(S.hub.bills).filter((it) => !it.done && dueInfo(it.due) && dueInfo(it.due).cls).length : 0;
+    const unread = S.mail ? mailCount() : 0;
+    set("b-inbox", unread, due ? `${unread ? " · " : ""}${due} due` : "", due > 0);
+  }
+  function renderAll() {
+    const evs = events();
+    renderDial(evs); renderHero(evs); renderTimeline(evs); renderFuel(evs); renderMail(); renderHubPanels(); renderStatus(); renderBadges();
+  }
+
+  // ---------- Google sign-in ----------
+  const SCOPES = ["https://www.googleapis.com/auth/calendar.readonly", "https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/spreadsheets"].join(" ");
+  const AUTH = { token: null, exp: 0, get ok() { return !!this.token && Date.now() < this.exp - 60000; } };
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } }
+  };
+  const sess = {
+    get(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { if (v == null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } }
+  };
+  function signIn(silent) {
+    if (!CFG.googleClientId) return;
+    const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    sess.set("jarvis.state", state);
+    sess.set("jarvis.view", (document.querySelector('.tab[aria-selected="true"]') || {}).dataset ? document.querySelector('.tab[aria-selected="true"]').dataset.view : "command");
+    if (silent) sess.set("jarvis.silentAt", String(Date.now()));
+    const p = new URLSearchParams({ client_id: CFG.googleClientId, redirect_uri: location.origin + location.pathname, response_type: "token", scope: SCOPES, include_granted_scopes: "true", state });
+    if (silent) p.set("prompt", "none");
+    location.assign("https://accounts.google.com/o/oauth2/v2/auth?" + p.toString());
+  }
+  function readRedirect() {
+    if (!location.hash || location.hash.length < 2) return;
+    const q = new URLSearchParams(location.hash.slice(1));
+    if (!q.has("access_token") && !q.has("error")) return;
+    history.replaceState(null, "", location.pathname + location.search);
+    if (!q.get("state") || q.get("state") !== sess.get("jarvis.state")) return;
+    sess.set("jarvis.state", null);
+    if (q.has("access_token")) {
+      AUTH.token = q.get("access_token");
+      AUTH.exp = Date.now() + Number(q.get("expires_in") || 3600) * 1000;
+      store.set("jarvis.token", AUTH.token); store.set("jarvis.exp", String(AUTH.exp)); store.set("jarvis.signedIn", "1");
+    } else {
+      S.authErr = q.get("error");
+    }
+  }
+  function loadToken() {
+    const t = store.get("jarvis.token"), e = Number(store.get("jarvis.exp") || 0);
+    if (t && Date.now() < e - 60000) { AUTH.token = t; AUTH.exp = e; }
+  }
+  // Re-sign in quietly when the hour-long token runs out, at most once every 10 minutes.
+  function maybeSilent() {
+    if (AUTH.ok || !CFG.googleClientId || store.get("jarvis.signedIn") !== "1") return false;
+    const at = Number(sess.get("jarvis.silentAt") || 0);
+    if (Date.now() - at < 10 * 60 * 1000) return false;
+    signIn(true);
+    return true;
+  }
+  async function gapi(url, opts) {
+    if (!AUTH.ok) throw { code: "needs_reauth", message: "Not signed in" };
+    const o = Object.assign({}, opts || {});
+    o.headers = Object.assign({ Authorization: "Bearer " + AUTH.token }, o.headers || {});
+    let r;
+    try { r = await fetch(url, o); } catch (e) { throw { code: "server_unavailable", message: "No connection" }; }
+    if (r.status === 401) { AUTH.token = null; store.set("jarvis.token", null); throw { code: "needs_reauth", message: "Sign-in expired" }; }
+    if (!r.ok) {
+      let m = "";
+      try { const j = await r.json(); m = (j.error && j.error.message) || ""; } catch (e) { /* no body */ }
+      throw { code: r.status === 403 ? "forbidden" : r.status === 404 ? "not_found" : r.status >= 500 ? "server_unavailable" : "http", message: m || ("Error " + r.status) };
+    }
+    return r.status === 204 ? null : r.json();
+  }
+  const retract = (e) => e && (e.code === "needs_reauth" || e.code === "forbidden" || e.code === "not_found");
+
+  // ---------- data ----------
+  async function loadCal() {
+    const s = new Date(S.now); s.setHours(0, 0, 0, 0);
+    const e = new Date(s); e.setDate(e.getDate() + 1);
+    const u = "https://www.googleapis.com/calendar/v3/calendars/primary/events?" + new URLSearchParams({ timeMin: s.toISOString(), timeMax: e.toISOString(), singleEvents: "true", orderBy: "startTime", maxResults: "60" });
+    try { const j = await gapi(u); S.cal = { events: j.items || [] }; S.calErr = null; S.calStale = false; }
+    catch (err) { S.calErr = err; if (retract(err)) S.cal = null; else S.calStale = !!S.cal; }
+  }
+  async function loadMail() {
+    try {
+      const list = await gapi("https://gmail.googleapis.com/gmail/v1/users/me/threads?" + new URLSearchParams({ q: MAIL_QUERY, maxResults: "10" }));
+      const ids = (list.threads || []).slice(0, 5).map((t) => t.id);
+      const full = await Promise.all(ids.map((id) => gapi(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${encodeURIComponent(id)}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`).catch(() => null)));
+      const threads = full.filter((t) => t && Array.isArray(t.messages) && t.messages.length).map((t) => {
+        const m = t.messages[t.messages.length - 1];
+        const hd = (n) => { const x = ((m.payload && m.payload.headers) || []).find((y) => y.name && y.name.toLowerCase() === n); return x ? x.value : ""; };
+        return { viewUrl: "https://mail.google.com/mail/u/0/#inbox/" + t.id, messages: [{ sender: hd("from"), subject: hd("subject"), date: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : hd("date") }] };
+      });
+      S.mail = { resultCountEstimate: Math.max(list.resultSizeEstimate || 0, (list.threads || []).length), threads };
+      S.mailErr = null;
+    } catch (err) { S.mailErr = err; if (retract(err)) S.mail = null; }
+  }
+  const SECTION_KEYS = new Set(["today", "health", "marketing", "music", "ai", "hu", "bills"]);
+  async function loadHub() {
+    if (!CFG.sheetId) { S.hub = null; S.hubErr = { code: "no_sheet" }; return; }
+    try {
+      const q = new URLSearchParams([["ranges", "Tasks!A2:D500"], ["ranges", "Meta!A1:B20"], ["valueRenderOption", "FORMATTED_VALUE"]]);
+      const j = await gapi(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(CFG.sheetId)}/values:batchGet?` + q.toString());
+      const vr = j.valueRanges || [];
+      const hub = {};
+      ((vr[0] && vr[0].values) || []).forEach((r, i) => {
+        const key = String(r[0] || "").trim().toLowerCase();
+        if (!SECTION_KEYS.has(key)) return;
+        if (!hub[key]) hub[key] = { items: [] };
+        hub[key].items.push({ text: String(r[1] || ""), done: /^(true|yes|1|x|✓|done)$/i.test(String(r[2] || "").trim()), due: String(r[3] || "").trim(), row: i + 2 });
+      });
+      const meta = {};
+      ((vr[1] && vr[1].values) || []).forEach((r) => { if (r[0]) meta[String(r[0]).trim()] = String(r[1] || "").trim(); });
+      hub.meta = { syncedAt: meta.synced_at || "" };
+      if (meta.weight_kg) hub.stats = { weightKg: Number(meta.weight_kg), waistCm: Number(meta.waist_cm) || null, measuredOn: meta.measured_on || "" };
+      S.hub = hub; S.hubErr = null;
+    } catch (err) { S.hubErr = err; if (retract(err)) S.hub = null; }
+  }
+  async function refresh() {
+    S.lastRefresh = Date.now();
+    if (!AUTH.ok) { if (maybeSilent()) return; renderAll(); return; }
+    await Promise.all([loadCal(), loadMail(), loadHub()]);
+    renderAll();
+  }
+
+  function tick() {
+    S.now = new Date();
+    const k = keyOf(S.now);
+    if (k !== dayKey) { dayKey = k; if (AUTH.ok) loadCal().then(renderAll); }
+    renderAll();
+  }
+
+  // ---------- tabs ----------
+  const VIEWS = ["command", "health", "business", "inbox"];
+  function showView(v, focus) {
+    if (!VIEWS.includes(v)) v = "command";
+    for (const n of VIEWS) {
+      const on = n === v;
+      $("view-" + n).hidden = !on;
+      const t = $("tab-" + n);
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      t.tabIndex = on ? 0 : -1;
+    }
+    if (focus) $("tab-" + v).focus();
+    try { localStorage.setItem("jarvis.view", v); } catch (e) { /* storage unavailable */ }
+  }
+  function wireTabs() {
+    $("tabs").addEventListener("click", (e) => { const t = e.target.closest(".tab"); if (t) showView(t.dataset.view); });
+    $("tabs").addEventListener("keydown", (e) => {
+      const i = VIEWS.indexOf(document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.view : "");
+      if (i < 0) return;
+      if (e.key === "ArrowRight") { e.preventDefault(); showView(VIEWS[(i + 1) % VIEWS.length], true); }
+      if (e.key === "ArrowLeft") { e.preventDefault(); showView(VIEWS[(i + VIEWS.length - 1) % VIEWS.length], true); }
+    });
+    let start = (location.hash || "").slice(1);
+    const back = sess.get("jarvis.view"); if (back) { sess.set("jarvis.view", null); if (!VIEWS.includes(start)) start = back; }
+    if (!VIEWS.includes(start)) { try { start = localStorage.getItem("jarvis.view") || "command"; } catch (e) { start = "command"; } }
+    showView(start);
+  }
+
+  // ---------- boot ----------
+  readRedirect();
+  loadToken();
+  $("hub-link-1").href = HUB_URL;
+  $("hub-link-2").href = HUB_URL;
+  $("signin").addEventListener("click", () => signIn(false));
+  wireTabs();
+  buildDial(); renderChips(); wireCmd();
+  dayKey = keyOf(S.now);
+  renderAll();
+  setInterval(tick, 30000);
+  refresh();
+  setInterval(() => { if (document.visibilityState === "visible") refresh(); }, 5 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - (S.lastRefresh || 0) > 60000) refresh(); });
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => { /* offline shell unavailable */ });
+})();
+</script>
+</body>
+</html>
