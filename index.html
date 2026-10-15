@@ -93,7 +93,7 @@ a { color: inherit; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 14px; height: 3px; display: inline-block; }
 
-.deck { display: grid; gap: 18px; min-width: 0; }
+.deck { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; min-width: 0; }
 .greet { font-family: var(--f-display); font-weight: 600; font-size: clamp(28px, 4.2vw, 44px); line-height: 1.05; letter-spacing: 0.01em; text-wrap: balance; margin: 0; }
 .greet em { font-style: normal; color: var(--arc); text-shadow: 0 0 18px rgba(73, 211, 255, 0.45); }
 .sysline { font-family: var(--f-mono); font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; margin: 6px 0 0; }
@@ -110,6 +110,17 @@ a { color: inherit; }
 .cmd label { display: flex; align-items: center; padding-left: 14px; color: var(--arc); font-family: var(--f-mono); font-size: 14px; }
 .cmd input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--ink); font: 500 16px var(--f-body); padding: 13px 12px; }
 .cmd input::placeholder { color: var(--ink-faint); }
+.cmd.listening { border-color: var(--arc); box-shadow: 0 0 0 1px var(--arc), 0 0 28px rgba(73, 211, 255, 0.4); }
+.mic, .lang { appearance: none; background: transparent; border: 0; border-left: 1px solid var(--arc-dim); color: var(--ink-dim); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.lang { font: 500 11px var(--f-mono); letter-spacing: 0.12em; padding: 0 11px; }
+.mic { width: 50px; }
+.mic svg { width: 19px; height: 19px; }
+.mic:hover, .lang:hover { color: var(--arc-hi); background: rgba(73, 211, 255, 0.08); }
+.mic.on { color: var(--red); background: rgba(255, 97, 112, 0.14); animation: micpulse 1.2s ease-in-out infinite; }
+@keyframes micpulse { 0%, 100% { box-shadow: inset 0 0 0 0 rgba(255, 97, 112, 0); } 50% { box-shadow: inset 0 0 16px 2px rgba(255, 97, 112, 0.55); } }
+@media (prefers-reduced-motion: reduce) { .mic.on { animation: none; } }
+.mic:focus-visible, .lang:focus-visible { outline: 2px solid var(--arc-hi); outline-offset: -2px; }
+.mic[hidden], .lang[hidden] { display: none; }
 .send { display: inline-flex; align-items: center; padding: 0 18px; background: var(--arc); color: #021018; font: 600 12px var(--f-display); letter-spacing: 0.18em; text-transform: uppercase; text-decoration: none; }
 .send:hover { background: var(--arc-hi); }
 .send:focus-visible, .chip:focus-visible, .task:focus-visible, .link:focus-visible, .ghost:focus-visible { outline: 2px solid var(--arc-hi); outline-offset: 2px; }
@@ -282,7 +293,9 @@ a { color: inherit; }
         <div class="nextup" id="nextup"></div>
         <form class="cmd" id="cmd" autocomplete="off">
           <label for="cmd-in" aria-hidden="true">&gt;_</label>
-          <input id="cmd-in" name="q" type="text" placeholder="Tell Jarvis what to do…" aria-label="Tell Jarvis what to do">
+          <input id="cmd-in" name="q" type="text" dir="auto" placeholder="Tell Jarvis what to do…" aria-label="Tell Jarvis what to do">
+          <button class="lang" id="cmd-lang" type="button" hidden title="Voice language">EN</button>
+          <button class="mic" id="cmd-mic" type="button" hidden aria-pressed="false" aria-label="Speak to Jarvis" title="Speak to Jarvis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
           <a class="send" id="cmd-go" href="https://claude.ai/new" target="_blank" rel="noopener">Send</a>
         </form>
         <div class="chips" id="chips"></div>
@@ -565,6 +578,60 @@ a { color: inherit; }
     input.addEventListener("input", sync);
     form.addEventListener("submit", (e) => { e.preventDefault(); sync(); if (input.value.trim()) go.click(); });
     go.addEventListener("click", () => { sync(); setTimeout(() => { input.value = ""; sync(); }, 300); });
+  }
+  // ---------- voice input ----------
+  function wireVoice() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const mic = $("cmd-mic"), langBtn = $("cmd-lang"), input = $("cmd-in"), form = $("cmd");
+    mic.hidden = false; langBtn.hidden = false;
+    const LANGS = [["en-US", "EN", "English"], ["he-IL", "HE", "Hebrew"], ["ru-RU", "RU", "Russian"]];
+    let li = 0;
+    try { const k = LANGS.findIndex((l) => l[0] === localStorage.getItem("jarvis.voiceLang")); if (k >= 0) li = k; } catch (e) { /* storage unavailable */ }
+    const showLang = () => { langBtn.textContent = LANGS[li][1]; langBtn.setAttribute("aria-label", `Voice language: ${LANGS[li][2]}. Click to change.`); };
+    showLang();
+    langBtn.addEventListener("click", () => {
+      li = (li + 1) % LANGS.length; showLang();
+      try { localStorage.setItem("jarvis.voiceLang", LANGS[li][0]); } catch (e) { /* storage unavailable */ }
+    });
+    const PH = input.placeholder, LISTEN = "Listening…";
+    let rec = null, base = "", hint = 0;
+    const say = (msg) => { input.placeholder = msg; clearTimeout(hint); hint = setTimeout(() => { if (!rec) input.placeholder = PH; }, 4000); };
+    const setOn = (on) => {
+      mic.classList.toggle("on", on); form.classList.toggle("listening", on);
+      mic.setAttribute("aria-pressed", on ? "true" : "false");
+      mic.setAttribute("aria-label", on ? "Stop listening" : "Speak to Jarvis"); mic.title = on ? "Stop listening" : "Speak to Jarvis";
+    };
+    const ERR = {
+      "not-allowed": "Allow the microphone for Jarvis to use voice.",
+      "service-not-allowed": "Voice isn't available here.",
+      "no-speech": "Didn't catch that. Tap the mic and try again.",
+      "audio-capture": "No microphone found.",
+      "network": "Voice needs an internet connection.",
+      "language-not-supported": "That voice language isn't supported here."
+    };
+    mic.addEventListener("click", () => {
+      if (rec) { rec.stop(); return; }
+      const r = new SR();
+      r.lang = LANGS[li][0]; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+      base = input.value.trim();
+      r.onstart = () => { setOn(true); input.placeholder = LISTEN; };
+      r.onresult = (e) => {
+        let txt = "";
+        for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+        input.value = [base, txt.trim()].filter(Boolean).join(" ");
+        input.dispatchEvent(new Event("input"));
+      };
+      r.onerror = (e) => { if (ERR[e.error]) say(ERR[e.error]); };
+      r.onend = () => {
+        rec = null; setOn(false);
+        if (input.placeholder === LISTEN) input.placeholder = PH;
+        input.focus(); const n = input.value.length; try { input.setSelectionRange(n, n); } catch (e) { /* not supported */ }
+      };
+      rec = r;
+      try { r.start(); } catch (err) { rec = null; setOn(false); say("Couldn't start the microphone."); }
+    });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && rec) rec.stop(); });
   }
 
   // ---------- timeline ----------
@@ -935,7 +1002,7 @@ a { color: inherit; }
   $("hub-link-2").href = HUB_URL;
   $("signin").addEventListener("click", () => signIn(false));
   wireTabs();
-  buildDial(); renderChips(); wireCmd();
+  buildDial(); renderChips(); wireCmd(); wireVoice();
   dayKey = keyOf(S.now);
   renderAll();
   setInterval(tick, 30000);
