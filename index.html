@@ -241,14 +241,14 @@ a { color: inherit; }
 
 /* ---------- jarvis chat ---------- */
 .jv { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; }
-.chat { grid-template-rows: auto minmax(0, 1fr) auto; align-content: stretch; height: clamp(460px, calc(100vh - 210px), 980px); }
+.chat { grid-template-rows: auto minmax(0, 1fr) auto; align-content: stretch; height: clamp(480px, calc(100vh - 210px - var(--bh, 0px)), 980px); }
 button.link { appearance: none; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 0; cursor: pointer; }
 .log { overflow-y: auto; display: grid; align-content: start; gap: 16px; padding: 4px 8px 4px 0; scrollbar-width: thin; scrollbar-color: var(--line) transparent; overscroll-behavior: contain; }
 .msg { display: grid; gap: 7px; min-width: 0; }
 .msg.me { justify-self: end; max-width: min(640px, 88%); background: rgba(73, 211, 255, 0.07); border: 1px solid var(--line); border-right: 2px solid var(--arc); padding: 9px 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .msg.ai { max-width: 780px; }
-.msg .who { font: 600 10px var(--f-mono); letter-spacing: 0.22em; color: var(--arc); display: flex; align-items: center; gap: 8px; }
-.msg .who::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--arc); box-shadow: 0 0 8px var(--arc); }
+.msg .who { font: 600 10px var(--f-mono); letter-spacing: 0.22em; color: var(--c, var(--arc)); display: flex; align-items: center; gap: 8px; }
+.msg .who::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--arc)); box-shadow: 0 0 8px var(--c, var(--arc)); }
 .msg.err { padding: 10px 12px; border-left: 2px solid var(--amber); background: rgba(255, 184, 77, 0.06); }
 .md { display: grid; gap: 8px; overflow-wrap: anywhere; }
 .md p, .md ul, .md ol, .md h3 { margin: 0; }
@@ -394,6 +394,136 @@ button.send { appearance: none; border: 0; cursor: pointer; }
 .chk span { display: grid; gap: 1px; min-width: 0; }
 .chk small { color: var(--ink-dim); font-size: 12px; overflow-wrap: anywhere; }
 
+/* ---------- brain HUD (Jarvis tab): one brain or 2–4 side by side ---------- */
+.bh { --bc: var(--arc); grid-template-columns: 118px minmax(0, 1fr); align-items: center; gap: 12px 22px; padding: 14px 18px 14px 14px; overflow: hidden; isolation: isolate; border-color: color-mix(in srgb, var(--bc) 28%, var(--line)); transition: border-color .4s; }
+.bh::before { border-top-color: var(--bc); border-left-color: var(--bc); }
+.bh::after { border-bottom-color: var(--bc); border-right-color: var(--bc); }
+.bh-grain { position: absolute; inset: 0; z-index: -2; pointer-events: none; opacity: .5; background-image: radial-gradient(color-mix(in srgb, var(--bc) 34%, transparent) 1px, transparent 1.3px); background-size: 13px 13px; -webkit-mask-image: linear-gradient(90deg, #000, transparent 38%); mask-image: linear-gradient(90deg, #000, transparent 38%); }
+.bh-sweep { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(100deg, transparent 35%, color-mix(in srgb, var(--bc) 10%, transparent) 50%, transparent 65%) no-repeat; background-size: 250% 100%; animation: bhsweep 8s linear infinite; }
+@keyframes bhsweep { from { background-position: 175% 0; } to { background-position: -75% 0; } }
+.bh-core { appearance: none; border: 0; background: none; padding: 0; width: 118px; aspect-ratio: 1; color: var(--bc); cursor: pointer; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--bc) 45%, transparent)); transition: color .4s; }
+.bh-core svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.bh-core:focus-visible { outline: 2px solid var(--arc-hi); outline-offset: 2px; }
+.bh-core .c-spin, .bh-core .c-orb, .bh-core .c-nuc { transform-box: view-box; transform-origin: 50% 50%; }
+.bh-core .c-spin { animation: spin 16s linear infinite; }
+.bh-core .c-spin.rev { animation-duration: 24s; animation-direction: reverse; }
+.bh-core .c-orb { animation: spin 11s linear infinite; }
+.bh-core .c-nuc { animation: nuc 3.4s ease-in-out infinite; }
+@keyframes nuc { 50% { transform: scale(1.07); opacity: .82; } }
+.bh.busy .c-spin { animation-duration: 2.2s; }
+.bh.busy .c-spin.rev { animation-duration: 3.4s; }
+.bh.busy .c-orb { animation-duration: 1.9s; }
+.bh.busy .c-nuc { animation-duration: .75s; }
+.bh-main { display: grid; gap: 12px; min-width: 0; }
+.bh-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 18px; }
+.bh-id { display: grid; gap: 3px; min-width: 0; flex: 1 1 260px; }
+.bh-id .sub { margin: 0; color: var(--bc); }
+.bh-id h2 { margin: 0; font: 600 clamp(19px, 2.1vw, 24px)/1.15 var(--f-display); letter-spacing: .05em; text-shadow: 0 0 16px color-mix(in srgb, var(--bc) 45%, transparent); overflow-wrap: anywhere; }
+.bh-id .meta.warn { color: var(--amber); }
+.bh-ctl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bh-ctl .seg { min-width: 250px; }
+.bh-ctl .seg button[aria-pressed="true"] { box-shadow: inset 0 -2px 0 var(--bc); color: var(--ink); background: color-mix(in srgb, var(--bc) 14%, transparent); }
+.bh-tog { display: none; }
+.bgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)); gap: 8px; }
+.bcard { --c: var(--arc); appearance: none; position: relative; min-width: 0; text-align: left; color: var(--ink); font: inherit; cursor: pointer; display: grid; gap: 3px; padding: 9px 12px 9px 15px; border: 1px solid var(--line); background: linear-gradient(135deg, color-mix(in srgb, var(--c) 7%, transparent), transparent 55%), rgba(4, 12, 18, 0.62); clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px)); transition: border-color .15s, background .15s; }
+.bcard::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); box-shadow: 0 0 10px var(--c); opacity: .5; }
+.bcard:hover { border-color: color-mix(in srgb, var(--c) 60%, var(--line)); }
+.bcard:focus-visible { outline: 2px solid var(--arc-hi); outline-offset: -2px; }
+.bcard .bn { font: 600 13.5px var(--f-display); letter-spacing: .05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px; }
+.bcard .bt { font: 500 10px var(--f-mono); letter-spacing: .04em; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bcard .bp { display: flex; justify-content: space-between; gap: 8px; margin-top: 2px; font: 500 10px var(--f-mono); letter-spacing: .06em; color: var(--ink-faint); text-transform: uppercase; white-space: nowrap; }
+.bcard .bp i { font-style: normal; display: inline-flex; align-items: center; gap: 5px; overflow: hidden; text-overflow: ellipsis; }
+.bcard .bp i::before { content: ""; flex: none; width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
+.bcard.locked { opacity: .55; }
+.bcard.locked:hover { opacity: .85; }
+.bcard.locked .bp i::before { background: var(--ink-faint); box-shadow: none; }
+.bcard[aria-pressed="true"] { border-color: var(--c); background: linear-gradient(135deg, color-mix(in srgb, var(--c) 22%, transparent), color-mix(in srgb, var(--c) 5%, transparent) 70%), rgba(4, 12, 18, 0.72); box-shadow: inset 0 0 22px color-mix(in srgb, var(--c) 16%, transparent); }
+.bcard[aria-pressed="true"]::before { opacity: 1; }
+.bcard[aria-pressed="true"]::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--c) 20%, transparent) 50%, transparent 60%); background-size: 100% 300%; animation: cardscan 3s linear infinite; }
+@keyframes cardscan { from { background-position: 0 100%; } to { background-position: 0 -200%; } }
+.bcard .slot { position: absolute; top: 7px; right: 9px; width: 17px; height: 17px; display: grid; place-items: center; border: 1px solid var(--line); font: 600 10px var(--f-mono); color: #021018; }
+.bcard[aria-pressed="true"] .slot { border-color: var(--c); background: var(--c); box-shadow: 0 0 8px var(--c); }
+
+/* compare arena (replaces the chat log in compare mode) */
+.arena { display: grid; grid-template-rows: auto minmax(210px, 1fr) auto; gap: 10px; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.arena-q { display: flex; justify-content: space-between; align-items: baseline; gap: 6px 14px; flex-wrap: wrap; border-left: 2px solid var(--arc); padding: 2px 0 2px 12px; }
+.arena-q p { margin: 0; font-weight: 600; overflow-wrap: anywhere; max-height: 4.4em; overflow-y: auto; flex: 1 1 280px; }
+.lanes { --n: 2; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 10px; min-height: 0; }
+.lane { --c: var(--arc); position: relative; min-height: 0; min-width: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; border: 1px solid var(--line); border-top: 2px solid var(--c); background: linear-gradient(180deg, color-mix(in srgb, var(--c) 6%, transparent), transparent 120px), rgba(4, 12, 18, 0.55); }
+.lane .lh { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px 7px; border-bottom: 1px solid var(--line-soft); min-width: 0; }
+.lane .lh b { font: 600 12.5px var(--f-display); letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-flex; align-items: center; gap: 8px; }
+.lane .lh b::before { content: ""; flex: none; width: 7px; height: 7px; background: var(--c); box-shadow: 0 0 8px var(--c); transform: rotate(45deg); }
+.lane .ls { font: 500 10px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); white-space: nowrap; }
+.lane .ls.run { color: var(--c); }
+.lane .ls.bad { color: var(--amber); }
+.lane .think { height: 2px; background: linear-gradient(90deg, transparent, var(--c), transparent) no-repeat; background-size: 40% 100%; animation: think 1.1s linear infinite; }
+@keyframes think { from { background-position: -60% 0; } to { background-position: 160% 0; } }
+.lane .think.off { background: none; animation: none; }
+.lane .lb { overflow-y: auto; padding: 10px 12px; font-size: 14.5px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; overscroll-behavior: contain; }
+.lane .lb:focus-visible { outline: 1px solid var(--c); outline-offset: -1px; }
+.lane .lf { display: grid; gap: 7px; padding: 8px 11px 10px; border-top: 1px solid var(--line-soft); }
+.lane .lf:empty { display: none; }
+.lane .stats { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font: 500 10.5px var(--f-mono); color: var(--ink-dim); }
+.lane .lrow { display: flex; flex-wrap: wrap; gap: 6px; }
+.lane .stats .cost { color: var(--ink); }
+.lane .bdg { font: 600 9px var(--f-mono); letter-spacing: .14em; text-transform: uppercase; padding: 1px 6px; border: 1px solid var(--c); color: var(--c); }
+.lane .btn { padding: 3px 10px; font-size: 12px; }
+.lane.win { border-color: var(--c); box-shadow: 0 0 0 1px var(--c), 0 0 26px color-mix(in srgb, var(--c) 32%, transparent); }
+.arena-foot { display: grid; gap: 8px; }
+.arena-foot:empty { display: none; }
+.verdict { border: 1px solid var(--line); border-left: 2px solid var(--arc); background: rgba(73, 211, 255, 0.04); padding: 10px 12px; max-height: 170px; overflow-y: auto; display: grid; gap: 8px; scrollbar-width: thin; }
+.verdict .vh { display: flex; justify-content: space-between; gap: 8px 12px; align-items: center; flex-wrap: wrap; }
+.verdict .judge .btn { padding: 3px 11px; font-size: 12px; }
+.verdict .judge select { padding: 3px 6px; font-size: 11px; }
+.verdict .sub { margin: 0; color: var(--arc); }
+.judge { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.judge select { background: #061019; color: var(--ink); border: 1px solid var(--line); font: 500 12px var(--f-mono); padding: 6px 8px; max-width: 100%; }
+.judge select:focus-visible { outline: 2px solid var(--arc-hi); outline-offset: 2px; }
+.arena-empty { grid-row: 1 / -1; min-height: 0; display: grid; gap: 12px; justify-items: start; align-content: start; overflow-y: auto; padding: 6px 0; max-width: 760px; }
+.arena-empty h3 { margin: 0; font: 600 22px var(--f-display); }
+.arena-empty p { margin: 0; color: var(--ink-dim); }
+.roster { display: flex; flex-wrap: wrap; gap: 8px; }
+.rchip { --c: var(--arc); font: 600 12px var(--f-display); letter-spacing: .08em; padding: 5px 11px; border: 1px solid var(--c); color: var(--ink); background: color-mix(in srgb, var(--c) 10%, transparent); display: inline-flex; align-items: center; gap: 7px; }
+.rchip::before { content: ""; width: 6px; height: 6px; background: var(--c); box-shadow: 0 0 6px var(--c); transform: rotate(45deg); }
+
+/* usage per provider + key slots */
+.spend { display: grid; gap: 5px; }
+.spend:empty { display: none; }
+.kv.pk span { display: inline-flex; align-items: center; gap: 7px; }
+.kv.pk span::before, .pdot { content: ""; display: inline-block; width: 6px; height: 6px; background: var(--c); box-shadow: 0 0 6px var(--c); transform: rotate(45deg); }
+.keys { display: grid; gap: 10px; }
+.keyrow { --c: var(--arc); display: grid; gap: 7px; padding: 10px 12px 12px; border: 1px solid var(--line-soft); border-left: 2px solid var(--c); transition: box-shadow .3s, border-color .3s; scroll-margin: 20px; }
+.keyrow.hl { border-color: var(--c); box-shadow: 0 0 18px color-mix(in srgb, var(--c) 30%, transparent); }
+.keyrow .kh { display: grid; gap: 2px; }
+.keyrow .kh b { font: 600 13px var(--f-display); letter-spacing: .08em; display: inline-flex; align-items: center; gap: 8px; }
+.keyrow .send { padding: 0 14px; }
+.keyrow .custom { display: grid; gap: 6px; padding-top: 8px; border-top: 1px dashed var(--line-soft); }
+.keyrow .custom input { font-family: var(--f-mono); }
+@media (max-width: 1040px) {
+  .lanes { grid-template-columns: repeat(min(var(--n), 2), minmax(0, 1fr)); grid-auto-rows: minmax(260px, 1fr); overflow-y: auto; }
+}
+@media (max-width: 760px) {
+  .bh { grid-template-columns: 54px minmax(0, 1fr); padding: 10px 12px 10px 10px; gap: 10px 12px; }
+  .bh-core { width: 54px; }
+  .bh-id { flex-basis: 0; }
+  .bh-id h2 { font-size: 17px; }
+  .bh-id .meta { font-size: 10.5px; }
+  .bh-tog { display: inline-flex; align-self: center; }
+  .bh-tog::after { content: " \25BE"; }
+  .bh.open .bh-tog::after { content: " \25B4"; }
+  .bh:not(.open) .bgrid, .bh:not(.open) .bh-ctl { display: none; }
+  .bh-ctl { width: 100%; }
+  .bh-ctl .seg { min-width: 0; flex: 1; }
+  .bh-main { gap: 10px; }
+  .bgrid { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(150px, 62%); overflow-x: auto; padding-bottom: 5px; scroll-snap-type: x proximity; scrollbar-width: none; margin-left: -66px; }
+  .bcard { scroll-snap-align: start; }
+  .lanes { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 88%; grid-auto-rows: auto; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; }
+  .lane { scroll-snap-align: start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bh-sweep, .bh-core .c-spin, .bh-core .c-orb, .bh-core .c-nuc, .bcard[aria-pressed="true"]::after, .lane .think { animation: none !important; }
+}
+
 /* ---------- settings ---------- */
 dialog.set { background: #061019; color: var(--ink); border: 1px solid var(--arc-dim); padding: 0; width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); box-shadow: 0 0 50px rgba(73, 211, 255, 0.18); }
 dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
@@ -478,7 +608,7 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
 
 @media (max-width: 1040px) {
   .jv { grid-template-columns: minmax(0, 1fr); }
-  .chat { height: clamp(440px, calc(100dvh - 240px), 820px); }
+  .chat { height: clamp(440px, calc(100dvh - 240px - var(--bh, 0px)), 820px); }
   .s7, .s5 { grid-column: span 12; }
   .s4 { grid-column: span 6; }
   .three .s4:last-child { grid-column: span 12; }
@@ -500,7 +630,7 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
   .full { display: none; }
   .short { display: inline; }
   .ibtn.scr, .desk-only { display: none; }
-  .chat { height: max(380px, calc(100dvh - 290px - env(safe-area-inset-bottom, 0px))); padding: 12px; }
+  .chat { height: max(400px, calc(100dvh - 290px - var(--bh, 0px) - env(safe-area-inset-bottom, 0px))); padding: 12px; }
   .chat .cmd label { display: none; }
   .msg.me { max-width: 92%; }
 }
@@ -643,10 +773,29 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
   </div>
 
   <div class="view" id="view-jarvis" role="tabpanel" aria-labelledby="tab-jarvis" hidden>
+    <section class="panel bh" id="brainhud" aria-label="Brain selection">
+      <span class="bh-grain" aria-hidden="true"></span><span class="bh-sweep" aria-hidden="true"></span>
+      <button class="bh-core" id="bh-core" type="button" aria-label="Brain core"></button>
+      <div class="bh-main">
+        <div class="bh-top">
+          <div class="bh-id"><span class="sub" id="bh-kicker">Neural core</span><h2 id="bh-name">No brain connected</h2><span class="meta" id="bh-meta"></span></div>
+          <div class="bh-ctl">
+            <div class="seg" role="group" aria-label="Brain mode">
+              <button type="button" data-mode="single" aria-pressed="true">Single<small>One brain answers</small></button>
+              <button type="button" data-mode="compare" aria-pressed="false">Compare<small>2–4 side by side</small></button>
+            </div>
+            <button class="ghost" type="button" id="bh-keys">API keys</button>
+          </div>
+          <button class="link bh-tog" type="button" id="bh-tog" aria-expanded="false" aria-controls="bh-grid">Brains</button>
+        </div>
+        <div class="bgrid" id="bh-grid" role="group" aria-label="Brains"></div>
+      </div>
+    </section>
     <section class="jv">
       <article class="panel chat">
-        <div class="ph"><h2>Jarvis</h2><span class="acts"><span class="vstat" hidden></span><button class="link" type="button" id="chat-new" style="background:none;cursor:pointer">New chat</button><a class="link" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude ↗</a></span></div>
+        <div class="ph"><h2 id="chat-title">Jarvis</h2><span class="acts"><span class="vstat" hidden></span><button class="link" type="button" id="chat-new" style="background:none;cursor:pointer">New chat</button><a class="link" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude ↗</a></span></div>
         <div class="log" id="chat-log" aria-live="polite"></div>
+        <div class="arena" id="arena" hidden></div>
         <form class="cmd" id="chat-form" autocomplete="off">
           <label for="chat-in" aria-hidden="true">&gt;_</label>
           <textarea id="chat-in" rows="1" dir="auto" placeholder="Ask Jarvis anything…" aria-label="Message Jarvis"></textarea>
@@ -657,12 +806,9 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
       </article>
       <aside class="rail">
         <article class="panel">
-          <div class="ph"><h2>Neural core</h2><span class="meta" id="core-meta"></span></div>
-          <div class="seg" role="group" aria-label="Jarvis brain">
-            <button type="button" data-tier="fast" aria-pressed="true">Fast<small>Haiku · cheapest</small></button>
-            <button type="button" data-tier="smart" aria-pressed="false">Smart<small>Sonnet · sharper</small></button>
-          </div>
+          <div class="ph"><h2>Usage</h2><span class="meta" id="core-meta"></span></div>
           <div class="kv"><span>This month</span><b id="cost-month">$0.00</b></div>
+          <div class="spend" id="spend"></div>
           <div class="kv"><span>Voice replies</span><b><button class="sw" type="button" role="switch" id="rail-tts" aria-checked="false" aria-label="Jarvis speaks replies aloud"></button></b></div>
         </article>
         <article class="panel">
@@ -735,11 +881,9 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
   <form method="dialog" class="set-in" id="set-form">
     <div class="srow"><h2 id="set-title">Settings</h2><button class="link set-x" value="close" style="background:none;cursor:pointer">Close</button></div>
     <section>
-      <h3>Neural core · Claude API key</h3>
-      <p class="small" id="set-key-status"></p>
-      <div class="field"><input id="set-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…" aria-label="Claude API key"><button class="send" type="button" id="set-key-save">Connect</button></div>
-      <div class="acts"><a class="link" href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">Get a key ↗</a><button class="link" type="button" id="set-key-remove" style="background:none;cursor:pointer">Remove key</button></div>
-      <p class="small">Stored only on this device. Pay-as-you-go through your Claude Console account.</p>
+      <h3>Brains · API keys</h3>
+      <div class="keys" id="set-keys"></div>
+      <p class="small">Keys stay on this device and go only to their own provider. Each one is pay-as-you-go on that provider's account; set a monthly spend limit there. These keys don't include your claude.ai connectors.</p>
     </section>
     <section>
       <h3>Experience</h3>
@@ -1175,6 +1319,7 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
       if (opts.voice) return "My brain isn't connected yet, Gil. Add the API key in the Jarvis tab.";
       window.open(ask(text), "_blank", "noopener"); return "";
     }
+    if (opts.voice && BR.mode === "compare") setMode("single");
     return chatSend(text, opts);
   }
   function logExchange(said, reply, opts) {
@@ -1620,41 +1765,206 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
     blip() { const c = audio(); if (!c) return; tone(c, { f0: 880, f1: 1320, dur: 0.09, vol: 0.022, attack: 0.005 }); }
   };
 
-  // ---------- Jarvis brain (Claude API, your own key) ----------
+  // ---------- Jarvis brains (your own API keys: Claude, OpenAI, Gemini, OpenRouter) ----------
+  // Claude brains run with tools (calendar, mail, missions, memory). Other brains get the same briefing but answer in text only.
   const API_URL = "https://api.anthropic.com/v1/messages";
   const MODELS = {
     fast: { id: "claude-haiku-5-5", label: "Fast", inP: 0.10, outP: 0.50 },
     smart: { id: "claude-sonnet-5-5", label: "Smart", inP: 2, outP: 10 }
   };
+  const PROVIDERS = {
+    anthropic: { name: "Claude (Anthropic)", short: "Anthropic", glyph: "C", color: "#ff9a62", store: "jarvis.ak", re: /^sk-ant-/, hint: "sk-ant-", ph: "sk-ant-…", keys: "https://platform.claude.com/settings/keys", unlocks: "Claude Fast, Smart and Opus · actions, memory, brief and news" },
+    openai: { name: "OpenAI", short: "OpenAI", glyph: "O", color: "#5cf0b0", store: "jarvis.k.openai", re: /^sk-(?!ant-|or-)/, hint: "sk-", ph: "sk-…", keys: "https://platform.openai.com/api-keys", unlocks: "GPT-6 Astra, GPT-6.1 Sol and GPT-6 Luna" },
+    google: { name: "Google Gemini", short: "Google", glyph: "G", color: "#93a6ff", store: "jarvis.k.google", re: /^AIza/, hint: "AIza", ph: "AIza…", keys: "https://aistudio.google.com/apikey", unlocks: "Gemini 4 Argon and Gemini 3.8 Flash" },
+    openrouter: { name: "OpenRouter", short: "OpenRouter", glyph: "R", color: "#d58bff", store: "jarvis.k.openrouter", re: /^sk-or-/, hint: "sk-or-", ph: "sk-or-…", keys: "https://openrouter.ai/settings/keys", unlocks: "One key for GPT, Gemini, Grok, DeepSeek and hundreds more" }
+  };
+  const BRAINS = [
+    { id: "claude-fast", p: "anthropic", model: "claude-haiku-5-5", name: "Claude Fast", tag: "Haiku 5.5 · quick, cheapest", inP: 0.10, outP: 0.50, tools: true },
+    { id: "claude-smart", p: "anthropic", model: "claude-sonnet-5-5", name: "Claude Smart", tag: "Sonnet 5.5 · sharper", inP: 2, outP: 10, tools: true },
+    { id: "claude-opus", p: "anthropic", model: "claude-opus-5-5", name: "Claude Opus", tag: "Opus 5.5 · deepest", inP: 4, outP: 20, tools: true },
+    { id: "gpt-astra", p: "openai", model: "gpt-6-astra", or: "openai/gpt-6-astra", name: "GPT-6 Astra", tag: "OpenAI flagship · premium", inP: 10, outP: 50 },
+    { id: "gpt-sol", p: "openai", model: "gpt-6.1-sol", or: "openai/gpt-6.1-sol", name: "GPT-6.1 Sol", tag: "OpenAI · balanced", inP: 2, outP: 10 },
+    { id: "gpt-luna", p: "openai", model: "gpt-6-luna", or: "openai/gpt-6-luna", name: "GPT-6 Luna", tag: "OpenAI · fast, cheap", inP: 0.10, outP: 0.50 },
+    { id: "gem-argon", p: "google", model: "gemini-4-argon", or: "google/gemini-4-argon", name: "Gemini 4 Argon", tag: "Google flagship", inP: 2, outP: 10 },
+    { id: "gem-flash", p: "google", model: "gemini-3.8-flash", or: "google/gemini-3.8-flash", name: "Gemini 3.8 Flash", tag: "Google · fast", inP: 0.75, outP: 3.75 },
+    { id: "grok", p: "openrouter", model: "x-ai/grok-4.7", name: "Grok 4.7", tag: "xAI · via OpenRouter", inP: 2, outP: 6 },
+    { id: "deepseek", p: "openrouter", model: "deepseek/deepseek-v4.1-flash", name: "DeepSeek V4.1", tag: "Flash · via OpenRouter", inP: 0.15, outP: 0.60 }
+  ];
+  const jget = (k) => { try { return JSON.parse(store.get(k) || "null"); } catch (e) { return null; } };
+  const pkey = (pid) => store.get(PROVIDERS[pid].store) || "";
+  function allBrains() {
+    const c = jget("jarvis.brain.custom");
+    if (!c || !c.model) return BRAINS;
+    return BRAINS.concat([{ id: "custom", p: "openrouter", model: c.model, name: c.name || c.model.split("/").pop(), tag: "Custom · " + c.model, inP: Number(c.inP) || 0, outP: Number(c.outP) || 0, custom: true }]);
+  }
+  const brainById = (id) => allBrains().find((b) => b.id === id) || null;
+  // Direct key first; GPT and Gemini brains fall back to OpenRouter when only that key is set.
+  function routeOf(b) {
+    if (!b) return null;
+    const k = pkey(b.p); if (k) return { via: b.p, key: k, model: b.model };
+    if (b.or) { const r = pkey("openrouter"); if (r) return { via: "openrouter", key: r, model: b.or }; }
+    return null;
+  }
+  const usable = (b) => !!routeOf(b);
+  const BR = {
+    get id() { return store.get("jarvis.brain") || (store.get("jarvis.model") === "smart" ? "claude-smart" : "claude-fast"); },
+    get mode() { return store.get("jarvis.mode") === "compare" ? "compare" : "single"; },
+    get cmp() { const a = jget("jarvis.cmp"); return Array.isArray(a) && a.length ? a.slice(0, 4) : ["claude-smart", "gpt-astra", "gem-argon"]; }
+  };
+  function curBrain() { const b = brainById(BR.id); return b && usable(b) ? b : (allBrains().find(usable) || null); }
   const AI = {
     get key() { return store.get("jarvis.ak") || ""; },
-    get tier() { return store.get("jarvis.model") === "smart" ? "smart" : "fast"; },
-    get ready() { return !!this.key; }
+    get claude() { return !!this.key; },
+    get brain() { return curBrain(); },
+    get tier() { const b = curBrain(); return b && (b.id === "claude-smart" || b.id === "claude-opus") ? "smart" : "fast"; },
+    get ready() { return !!curBrain(); }
   };
+  const estTok = (s) => Math.round(String(s || "").length / 3.6);
+  const costOf = (u, b) => u && u.cost != null && isFinite(u.cost) ? Number(u.cost) : (((u && u.in) || 0) * b.inP + ((u && u.out) || 0) * b.outP) / 1e6;
+  const estCost = (b, inTok, outTok) => (inTok * b.inP + (outTok || 450) * b.outP) / 1e6;
+  function fmtUsd(v) {
+    if (!(v > 0)) return "$0";
+    if (v < 0.01) { const c = v * 100; return (c < 0.1 ? c.toFixed(2) : c.toFixed(1)) + "¢"; }
+    return "$" + v.toFixed(2);
+  }
+  const fmtK = (n) => n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n || 0);
+  const secs = (ms) => (ms / 1000).toFixed(1) + "s";
   const apiHeaders = (k) => ({ "content-type": "application/json", "x-api-key": k, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" });
   function apiError(status, j) {
     const msg = (j && j.error && j.error.message) || "";
     if (/credit balance/i.test(msg)) return { code: "credit", message: "Your Claude API credit has run out. Top it up under Billing in the Claude Console." };
     if (status === 401) return { code: "auth", message: "That API key isn't valid. Check it in Settings." };
     if (status === 403) return { code: "perm", message: "This API key isn't allowed to do that. Check it in the Claude Console." };
+    if (status === 404) return { code: "model", message: "This Claude key can't use that model yet." };
     if (status === 429) return { code: "rate", message: "Too many requests right now. Give it a few seconds." };
     if (status === 529 || status >= 500) return { code: "busy", message: "Claude is overloaded right now. Try again in a moment." };
     return { code: "http", message: msg || ("Error " + status) };
   }
-  async function connectKey(input, status) {
-    const k = String(input.value || "").trim();
-    if (!/^sk-ant-/.test(k)) { status.className = "small bad"; status.textContent = "That doesn't look like a Claude API key. It starts with sk-ant-."; return; }
-    status.className = "small"; status.textContent = "Testing the key…";
-    try {
-      let r;
-      try { r = await fetch(API_URL, { method: "POST", headers: apiHeaders(k), body: JSON.stringify({ model: MODELS.fast.id, max_tokens: 1, messages: [{ role: "user", content: "hi" }] }) }); }
-      catch (e) { throw { message: "Couldn't reach Claude. Check your internet connection." }; }
-      if (!r.ok) { let j = null; try { j = await r.json(); } catch (e) { /* no body */ } throw apiError(r.status, j); }
-      store.set("jarvis.ak", k); input.value = "";
-      status.className = "small ok"; status.textContent = `Connected · key ending ${k.slice(-4)}`;
-      sfx.online(); applyPrefs(); renderChat(true);
-    } catch (e) { status.className = "small bad"; status.textContent = (e && e.message) || "That key didn't work."; }
+  function provError(pid, status, j, model) {
+    const P = PROVIDERS[pid] || { name: "The provider" };
+    let raw = (j && j.error && (j.error.message || j.error)) || (Array.isArray(j) && j[0] && j[0].error && j[0].error.message) || "";
+    if (typeof raw !== "string") raw = JSON.stringify(raw).slice(0, 200);
+    if (pid === "anthropic") return Object.assign(apiError(status, j), { raw });
+    let e;
+    if (status === 401 || /api key not valid|invalid api key|incorrect api key|user not found/i.test(raw)) e = { code: "auth", message: `That ${P.name} key isn't valid. Check it in Settings → API keys.` };
+    else if (status === 402 || /insufficient_quota|exceeded your current quota|insufficient credits|billing/i.test(raw)) e = { code: "credit", message: `Your ${P.name} account is out of credit or quota. Top it up on their site.` };
+    else if (status === 404 || /model.{0,40}(not found|does not exist|not supported)|is not found for api version/i.test(raw)) e = { code: "model", message: `${P.name} says this key can't use ${model || "that model"}.` };
+    else if (status === 429) e = { code: "rate", message: `${P.name} is rate-limiting right now. Give it a few seconds.` };
+    else if (status === 403) e = { code: "perm", message: `This ${P.name} key isn't allowed to do that.` };
+    else if (status >= 500) e = { code: "busy", message: `${P.name} is overloaded right now. Try again in a moment.` };
+    else e = { code: "http", message: raw || `${P.name} error ${status}` };
+    return Object.assign(e, { raw });
   }
+  // Server-sent events reader shared by every provider.
+  async function readSSE(r, onData) {
+    const reader = r.body.getReader(), dec = new TextDecoder();
+    let buf = "";
+    const flush = (chunk) => { const data = chunk.split("\n").filter((l) => l.startsWith("data:")).map((l) => l.slice(5).replace(/^ /, "")).join("\n"); if (data) onData(data); };
+    try {
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf = (buf + dec.decode(value, { stream: true })).replace(/\r\n/g, "\n");
+        let cut;
+        while ((cut = buf.indexOf("\n\n")) >= 0) { const c = buf.slice(0, cut); buf = buf.slice(cut + 2); flush(c); }
+      }
+      if (buf.trim()) flush(buf);
+    } catch (e) { try { reader.cancel(); } catch (x) { /* already closed */ } throw e; }
+  }
+  // One text-only streaming call to any brain. msgs: [{ role: "user" | "assistant", text }].
+  async function streamBrain(b, o) {
+    const rt = routeOf(b);
+    if (!rt) throw { code: "nokey", message: `No key for ${b.name} yet. Add one in Settings → API keys.` };
+    const t0 = performance.now(), usage = { in: 0, out: 0, via: rt.via };
+    let first = 0, text = "";
+    const add = (t) => { if (!t) return; if (!first) first = performance.now() - t0; text += t; if (o.onText) o.onText(text); };
+    const max = o.maxTokens || (rt.via === "anthropic" ? 1600 : 4000);
+    let url, headers, body;
+    if (rt.via === "anthropic") {
+      url = API_URL; headers = apiHeaders(rt.key);
+      body = { model: rt.model, max_tokens: max, system: o.system, messages: o.msgs.map((m) => ({ role: m.role, content: m.text })), stream: true };
+    } else if (rt.via === "google") {
+      url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(rt.model)}:streamGenerateContent?alt=sse`;
+      headers = { "content-type": "application/json", "x-goog-api-key": rt.key };
+      body = { systemInstruction: { parts: [{ text: o.system }] }, contents: o.msgs.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.text }] })), generationConfig: { maxOutputTokens: max } };
+    } else {
+      const or = rt.via === "openrouter";
+      url = or ? "https://openrouter.ai/api/v1/chat/completions" : "https://api.openai.com/v1/chat/completions";
+      headers = { "content-type": "application/json", authorization: "Bearer " + rt.key };
+      if (or) { headers["HTTP-Referer"] = location.origin + location.pathname; headers["X-Title"] = "Jarvis"; }
+      body = { model: rt.model, stream: true, stream_options: { include_usage: true }, messages: [{ role: "system", content: o.system }].concat(o.msgs.map((m) => ({ role: m.role, content: m.text }))) };
+      body[or ? "max_tokens" : "max_completion_tokens"] = max;
+    }
+    let r;
+    try { r = await fetch(url, { method: "POST", signal: o.signal, headers, body: JSON.stringify(body) }); }
+    catch (e) { if (e && e.name === "AbortError") throw e; throw { code: "net", message: `Couldn't reach ${PROVIDERS[rt.via].name}. Check your internet connection.` }; }
+    if (!r.ok) { let j = null; try { j = await r.json(); } catch (e) { /* no body */ } throw provError(rt.via, r.status, j, rt.model); }
+    await readSSE(r, (data) => {
+      if (data === "[DONE]") return;
+      let ev; try { ev = JSON.parse(data); } catch (e) { return; }
+      if (rt.via === "anthropic") {
+        if (ev.type === "message_start") { const u = (ev.message && ev.message.usage) || {}; usage.in = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0); usage.out = u.output_tokens || 0; }
+        else if (ev.type === "content_block_delta" && ev.delta && ev.delta.type === "text_delta") add(ev.delta.text);
+        else if (ev.type === "message_delta" && ev.usage && ev.usage.output_tokens != null) usage.out = ev.usage.output_tokens;
+        else if (ev.type === "error") throw { message: (ev.error && /overload/i.test(ev.error.type || "")) ? "Claude is overloaded right now. Try again in a moment." : ((ev.error && ev.error.message) || "The reply was cut off.") };
+      } else if (rt.via === "google") {
+        if (ev.error) throw provError("google", Number(ev.error.code) || 500, ev, rt.model);
+        const c = (ev.candidates || [])[0];
+        if (c && c.content && Array.isArray(c.content.parts)) for (const p of c.content.parts) if (p && p.text && !p.thought) add(p.text);
+        if (ev.promptFeedback && ev.promptFeedback.blockReason) throw { message: "Gemini declined to answer this one." };
+        const um = ev.usageMetadata;
+        if (um) { usage.in = um.promptTokenCount || 0; usage.out = (um.candidatesTokenCount || 0) + (um.thoughtsTokenCount || 0); }
+      } else {
+        if (ev.error) throw provError(rt.via, Number(ev.error.code) || 500, ev, rt.model);
+        const ch = (ev.choices || [])[0];
+        if (ch && ch.delta && typeof ch.delta.content === "string") add(ch.delta.content);
+        if (ev.usage) { usage.in = ev.usage.prompt_tokens || 0; usage.out = ev.usage.completion_tokens || 0; if (ev.usage.cost != null) usage.cost = Number(ev.usage.cost); }
+      }
+    });
+    if (!text.trim()) throw { code: "empty", message: `${b.name} returned an empty answer.` };
+    return { text, usage, ms: performance.now() - t0, first, via: rt.via };
+  }
+  // Key check when connecting. Claude sends a one-token message (catches an empty balance); the others list their models, which is free.
+  async function testKey(pid, k) {
+    const name = PROVIDERS[pid].name;
+    const net = () => { throw { message: `Couldn't reach ${name}. Check your internet connection.` }; };
+    const ok = async (r) => { let j = null; try { j = await r.json(); } catch (e) { /* no body */ } if (!r.ok) throw provError(pid, r.status, j); return j || {}; };
+    if (pid === "anthropic") {
+      await fetch(API_URL, { method: "POST", headers: apiHeaders(k), body: JSON.stringify({ model: MODELS.fast.id, max_tokens: 1, messages: [{ role: "user", content: "hi" }] }) }).catch(net).then(ok);
+      return "";
+    }
+    if (pid === "openai") {
+      const j = await fetch("https://api.openai.com/v1/models", { headers: { authorization: "Bearer " + k } }).catch(net).then(ok);
+      const ids = (j.data || []).map((m) => m.id);
+      return ids.includes("gpt-6-astra") ? "GPT-6 Astra available" : "this key doesn't list GPT-6 Astra yet";
+    }
+    if (pid === "google") {
+      const j = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000", { headers: { "x-goog-api-key": k } }).catch(net).then(ok);
+      const ids = (j.models || []).map((m) => String(m.name || "").replace(/^models\//, ""));
+      return ids.includes("gemini-4-argon") ? "Gemini 4 Argon available" : "";
+    }
+    const j = await fetch("https://openrouter.ai/api/v1/key", { headers: { authorization: "Bearer " + k } }).catch(net).then(ok);
+    const d = j.data || {};
+    return d.limit_remaining != null ? `$${Number(d.limit_remaining).toFixed(2)} of its limit left` : d.usage != null ? `$${Number(d.usage).toFixed(2)} used so far` : "";
+  }
+  async function connectProv(pid, input, status) {
+    const P = PROVIDERS[pid], k = String(input.value || "").trim();
+    const say = (cls, t) => { status.className = "small" + (cls ? " " + cls : ""); status.textContent = t; };
+    if (!k) { say("bad", "Paste the key first."); return false; }
+    const other = Object.keys(PROVIDERS).find((q) => q !== pid && PROVIDERS[q].re.test(k));
+    if (other) { say("bad", `That's ${/^[AEIOU]/.test(PROVIDERS[other].name) ? "an" : "a"} ${PROVIDERS[other].name} key. It goes in the ${PROVIDERS[other].name} slot.`); return false; }
+    if (!P.re.test(k)) { say("bad", `That doesn't look like a ${P.name} key. It starts with ${P.hint}.`); return false; }
+    say("", "Testing the key…");
+    try {
+      const info = await testKey(pid, k);
+      store.set(P.store, k); input.value = ""; KEYINFO[pid] = info;
+      say("ok", `Connected · key ending ${k.slice(-4)}${info ? " · " + info : ""}`);
+      sfx.online(); applyPrefs(); renderChat(true);
+      return true;
+    } catch (e) { say("bad", (e && e.message) || "That key didn't work."); return false; }
+  }
+  const KEYINFO = {};
+  const connectKey = (input, status) => connectProv("anthropic", input, status);
 
   const RULES = [
     "You are J.A.R.V.I.S., the user's personal assistant, living inside his Jarvis home-screen app on his PC and phone. He reaches you by typing or by voice.",
@@ -1831,11 +2141,11 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
   }
   let rq = 0;
   const scheduleRender = () => { if (!rq) rq = requestAnimationFrame(() => { rq = 0; renderChat(); }); };
-  async function callModel(signal, live) {
-    const tier = AI.tier;
+  // Claude with tools (the full Jarvis brain).
+  async function callModel(signal, live, brain) {
     let r;
     try {
-      r = await fetch(API_URL, { method: "POST", signal, headers: apiHeaders(AI.key), body: JSON.stringify({ model: MODELS[tier].id, max_tokens: 1600, system: sysPrompt(CHAT.voiceTurn), tools: TOOLS, messages: apiMessages(), stream: true }) });
+      r = await fetch(API_URL, { method: "POST", signal, headers: apiHeaders(AI.key), body: JSON.stringify({ model: brain.model, max_tokens: 1600, system: sysPrompt(CHAT.voiceTurn), tools: TOOLS, messages: apiMessages(), stream: true }) });
     } catch (e) { if (e && e.name === "AbortError") throw e; throw { message: "Couldn't reach Claude. Check your internet connection." }; }
     if (!r.ok) { let j = null; try { j = await r.json(); } catch (e) { /* no body */ } throw apiError(r.status, j); }
     const reader = r.body.getReader(), dec = new TextDecoder();
@@ -1871,36 +2181,73 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
         }
       }
     }
-    return { stop, usage, tier };
+    return { stop, usage };
   }
+  // The chat thread as plain text turns, for brains without tools.
+  function plainMessages() {
+    let m = CHAT.msgs.slice(-30), i = 0;
+    while (i < m.length && !(m[i].role === "user" && typeof m[i].content === "string")) i++;
+    const out = [];
+    for (const x of m.slice(i)) {
+      const t = typeof x.content === "string" ? x.content : (x.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
+      if (!t) continue;
+      const last = out[out.length - 1];
+      if (last && last.role === x.role) last.text += "\n\n" + t; else out.push({ role: x.role, text: t });
+    }
+    return out;
+  }
+  const TEXT_ONLY = (b) => `Right now he is talking to you through ${b.name}. In this app that brain has no tools: you can't search or read more email, change missions, save notes, draft emails or create calendar events. Answer from the context above. If he asks for an action, say in one short line that Claude handles actions and he can switch brains in the Jarvis tab, then help as far as words can. Ignore the earlier lines about calling tools.`;
+  const CMP_RULE = "This is a side-by-side comparison: several AI brains answer the same question independently and he compares the answers. You have no tools here. Answer directly and as well as you can, using the context above where it helps. Keep it reasonably concise.";
   function cleanBlocks(blocks) {
     return blocks.filter(Boolean).map((b) => b.type === "text" ? (b.text.trim() ? { type: "text", text: b.text } : null) : b.type === "tool_use" ? { type: "tool_use", id: b.id, name: b.name, input: b.input && typeof b.input === "object" ? b.input : {} } : null).filter(Boolean);
   }
   const monthKey = () => "jarvis.cost." + keyOf(new Date()).slice(0, 7);
-  function addCost(u, tier) { const p = MODELS[tier] || MODELS.fast; store.set(monthKey(), String(Number(store.get(monthKey()) || 0) + (u.in * p.inP + u.out * p.outP) / 1e6 + (u.searches || 0) * 0.01)); renderCost(); }
-  function renderCost() { const v = Number(store.get(monthKey()) || 0); $("cost-month").textContent = v > 0 && v < 0.01 ? "< $0.01" : "$" + v.toFixed(2); }
+  // x is a Claude tier name ("fast" / "smart") for background jobs, or a brain.
+  function addCost(u, x) {
+    const b = typeof x === "string" ? Object.assign({ p: "anthropic" }, MODELS[x] || MODELS.fast) : x;
+    const usd = costOf(u, b) + ((u && u.searches) || 0) * 0.01;
+    store.set(monthKey(), String(Number(store.get(monthKey()) || 0) + usd));
+    const pk = monthKey().replace(".cost.", ".costp."), per = jget(pk) || {}, via = (u && u.via) || b.p || "anthropic";
+    per[via] = (per[via] || 0) + usd; store.set(pk, JSON.stringify(per));
+    renderCost();
+  }
+  const money = (v) => v > 0 && v < 0.01 ? "< $0.01" : "$" + v.toFixed(2);
+  function renderCost() {
+    $("cost-month").textContent = money(Number(store.get(monthKey()) || 0));
+    const box = $("spend"); if (!box) return;
+    const per = jget(monthKey().replace(".cost.", ".costp.")) || {};
+    box.replaceChildren(...Object.keys(PROVIDERS).filter((p) => per[p] > 0).map((p) => h("div", { class: "kv pk", style: `--c:${PROVIDERS[p].color}` }, h("span", { text: PROVIDERS[p].name }), h("b", { text: money(per[p]) }))));
+  }
 
   async function chatSend(text, opts) {
     opts = opts || {};
     text = String(text || "").trim();
-    if (!text || !AI.ready) return "";
+    const brain = (opts.brain && brainById(opts.brain)) || curBrain();
+    if (!text || !brain || !usable(brain)) return "";
     if (CHAT.busy) return "I'm still on the last one. Give me a second.";
     if (window.speechSynthesis && !opts.voice) window.speechSynthesis.cancel();
     const gen = CHAT.gen;
     CHAT.err = null; CHAT.voiceTurn = !!opts.voice;
     CHAT.msgs.push({ role: "user", content: text }); chatSave();
-    CHAT.busy = true; CHAT.ctrl = new AbortController(); setComposer();
+    CHAT.busy = true; CHAT.ctrl = new AbortController(); setComposer(); renderBrainHud();
     sfx.blip();
     let said = "";
     try {
-      for (let round = 0; round < 8; round++) {
-        CHAT.live = { blocks: [] }; renderChat(true);
-        const res = await callModel(CHAT.ctrl.signal, CHAT.live);
-        addCost(res.usage, res.tier);
+      if (!brain.tools) {
+        CHAT.live = { blocks: [{ type: "text", text: "" }], brain: brain.id }; renderChat(true);
+        const res = await streamBrain(brain, { system: sysPrompt(CHAT.voiceTurn) + "\n\n" + TEXT_ONLY(brain), msgs: plainMessages(), signal: CHAT.ctrl.signal, onText: (t) => { if (CHAT.live) { CHAT.live.blocks[0].text = t; scheduleRender(); } } });
+        addCost(res.usage, brain);
+        if (gen !== CHAT.gen) return "";
+        CHAT.msgs.push({ role: "assistant", content: [{ type: "text", text: res.text }], _brain: brain.id }); CHAT.live = null;
+        said = res.text;
+      } else for (let round = 0; round < 8; round++) {
+        CHAT.live = { blocks: [], brain: brain.id }; renderChat(true);
+        const res = await callModel(CHAT.ctrl.signal, CHAT.live, brain);
+        addCost(res.usage, brain);
         if (gen !== CHAT.gen) return "";
         const content = cleanBlocks(CHAT.live.blocks);
         if (!content.length) content.push({ type: "text", text: "…" });
-        CHAT.msgs.push({ role: "assistant", content }); CHAT.live = null;
+        CHAT.msgs.push({ role: "assistant", content, _brain: brain.id }); CHAT.live = null;
         said += content.filter((b) => b.type === "text").map((b) => b.text).join("\n") + "\n";
         const uses = content.filter((b) => b.type === "tool_use");
         if (res.stop !== "tool_use" || !uses.length) break;
@@ -1913,11 +2260,11 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
     } catch (e) {
       if (e && e.name === "AbortError") {
         const partial = CHAT.live ? cleanBlocks(CHAT.live.blocks).filter((b) => b.type === "text") : [];
-        if (partial.length && gen === CHAT.gen) CHAT.msgs.push({ role: "assistant", content: partial.concat([{ type: "text", text: "_(stopped)_" }]) });
+        if (partial.length && gen === CHAT.gen) CHAT.msgs.push({ role: "assistant", content: partial.concat([{ type: "text", text: "_(stopped)_" }]), _brain: brain.id });
       } else CHAT.err = (e && e.message) || "Something went wrong.";
     } finally {
       CHAT.busy = false; CHAT.ctrl = null; CHAT.live = null; CHAT.running.clear(); CHAT.voiceTurn = false;
-      fixTail(); chatSave(); setComposer(); renderChat(true);
+      fixTail(); chatSave(); setComposer(); renderChat(true); renderBrainHud();
       link("chat");
       if (said.trim() && !CHAT.err && !opts.voice && pref("jarvis.tts")) speak(said);
     }
@@ -2007,6 +2354,7 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
       h("div", { class: "sub", text: "Neural core · offline" }),
       h("h3", { text: "Give Jarvis its own brain" }),
       h("p", { text: "Connect a Claude API key and Jarvis answers right here, using your calendar, inbox and missions. It's pay-as-you-go: on Fast, a message costs about a twentieth of a cent." }),
+      h("p", null, "Claude is the brain that can take actions. You can add GPT, Gemini or OpenRouter keys too under ", h("button", { class: "link", type: "button", text: "API keys", onclick: () => openKeys() }), " and compare them side by side."),
       h("ol", null,
         h("li", null, "Open the ", h("a", { href: "https://platform.claude.com/", target: "_blank", rel: "noopener", text: "Claude Console" }), " and sign in."),
         h("li", { text: "Under Billing, add a few dollars of credit and set a monthly spend limit." }),
@@ -2020,10 +2368,23 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
     const ideas = [["What's left today?", "What's left on my day, and what should I focus on next?"], ["Anything urgent?", "Anything urgent in my inbox? Keep it short."], ["Add a mission", null], ["Plan tomorrow", "Look at tomorrow's calendar and my missions and give me a tight plan for tomorrow."]];
     return h("div", { class: "welcome" },
       h("h3", null, greetWord(new Date().getHours()) + ", ", h("em", { style: "font-style:normal;color:var(--arc)", text: NAME() + "." })),
-      h("p", { text: "Neural core online. Ask about your day, your inbox or your missions, or tell me what to add." }),
+      h("p", { text: `${AI.brain ? AI.brain.name : "Neural core"} online. Ask about your day, your inbox or your missions${AI.brain && AI.brain.tools ? ", or tell me what to add" : ""}.` }),
       h("div", { class: "chips" }, ideas.map(([l, p]) => h("button", { class: "chip", type: "button", text: l, onclick: () => p ? chatSend(p) : jarvisDraft("Add a mission to today: ") }))));
   }
-  const aiGroup = () => h("div", { class: "msg ai" }, h("div", { class: "who", text: "JARVIS" }));
+  const aiGroup = (bid) => {
+    const b = bid && brainById(bid);
+    const g = h("div", { class: "msg ai", style: b ? `--c:${PROVIDERS[b.p].color}` : null }, h("div", { class: "who", text: b ? "JARVIS · " + b.name.toUpperCase() : "JARVIS" }));
+    g._brain = bid || null;
+    return g;
+  };
+  // Re-ask the last question with a Claude brain (for actions a text-only brain can't take).
+  function redoWithClaude() {
+    let i = CHAT.msgs.length - 1;
+    while (i >= 0 && !(CHAT.msgs[i].role === "user" && typeof CHAT.msgs[i].content === "string")) i--;
+    if (i < 0 || CHAT.busy) return;
+    const id = store.get("jarvis.brain.claude"), b = brainById(id);
+    chatSend(CHAT.msgs[i].content, { brain: b && b.tools ? b.id : "claude-fast" });
+  }
   function renderChat(toBottom) {
     renderAsk();
     const log = $("chat-log"); if (!log) return;
@@ -2048,11 +2409,13 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
     };
     for (const m of CHAT.msgs) {
       if (m.role === "user") { if (typeof m.content === "string") { log.append(h("div", { class: "msg me", dir: "auto", text: m.content })); grp = null; } continue; }
-      if (!grp) { grp = aiGroup(); log.append(grp); }
+      if (!grp) { grp = aiGroup(m._brain); log.append(grp); }
       addBlocks(m.content || []);
     }
+    const lastB = grp && grp._brain && brainById(grp._brain);
+    if (grp && !CHAT.live && !CHAT.busy && lastB && !lastB.tools && AI.claude) grp.append(h("div", { class: "acts" }, h("button", { class: "link", type: "button", text: "Ask Claude instead (can take actions)", onclick: redoWithClaude })));
     if (CHAT.live) {
-      if (!grp) { grp = aiGroup(); log.append(grp); }
+      if (!grp) { grp = aiGroup(CHAT.live.brain); log.append(grp); }
       addBlocks(CHAT.live.blocks, true);
       const lb = CHAT.live.blocks.filter(Boolean).pop();
       if (!lb || lb.type === "text") grp.append(h("span", { class: "caret", "aria-hidden": "true" }));
@@ -2061,57 +2424,401 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
     if (toBottom || near) log.scrollTop = log.scrollHeight;
   }
   function setComposer() {
-    const go = $("chat-go"), inp = $("chat-in");
+    const go = $("chat-go"), inp = $("chat-in"), busy = CHAT.busy || CMP.busy, cmp = BR.mode === "compare" && AI.ready;
     inp.disabled = !AI.ready;
-    inp.placeholder = AI.ready ? "Ask Jarvis anything…" : "Connect a key above to talk to Jarvis here";
-    go.textContent = CHAT.busy ? "Stop" : "Send"; go.classList.toggle("stop", CHAT.busy); go.disabled = !AI.ready;
+    if (!(CONVO && CONVO.on)) inp.placeholder = !AI.ready ? "Connect a key above to talk to Jarvis here" : cmp ? `Ask ${cmpSet().length} brains at once…` : "Ask Jarvis anything…";
+    go.textContent = busy ? "Stop" : cmp ? "Compare" : "Send"; go.classList.toggle("stop", busy); go.disabled = !AI.ready;
   }
   function autosize(t) { t.style.height = "auto"; t.style.height = Math.min(168, t.scrollHeight) + "px"; }
   function wireChat() {
     const f = $("chat-form"), inp = $("chat-in");
     f.addEventListener("submit", (e) => {
       e.preventDefault();
-      if (CHAT.busy) { if (e.submitter === $("chat-go") && CHAT.ctrl) CHAT.ctrl.abort(); return; }
+      if (CHAT.busy || CMP.busy) { if (e.submitter === $("chat-go")) { if (CHAT.ctrl) CHAT.ctrl.abort(); if (CMP.ctrl) CMP.ctrl.abort(); } return; }
       const v = inp.value; if (!v.trim()) return;
-      inp.value = ""; autosize(inp); route(v);
+      inp.value = ""; autosize(inp);
+      if (BR.mode === "compare" && !isMemoryCmd(v)) runCompare(v);
+      else route(v).then((r) => { if (BR.mode === "compare" && r) { CMP.note = r; renderArena(); } });
     });
     inp.addEventListener("input", () => autosize(inp));
     inp.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); f.requestSubmit(); } });
     $("chat-new").addEventListener("click", () => {
+      if (BR.mode === "compare") { if (CMP.ctrl) CMP.ctrl.abort(); CMP.run = null; CMP.note = null; saveRun(); renderArena(); inp.focus(); return; }
       CHAT.gen++; if (CHAT.ctrl) CHAT.ctrl.abort();
       CHAT.msgs = []; CHAT.err = null; chatSave(); renderChat(true); link("chat"); inp.focus();
     });
   }
 
   // ---------- settings ----------
-  function fillSettings() {
-    const k = AI.key, st = $("set-key-status");
-    $("set-key").value = "";
-    st.className = "small" + (k ? " ok" : "");
-    st.textContent = k ? `Connected · key ending ${k.slice(-4)}` : "Not connected. Until you add a key, Jarvis hands your requests to Claude in the browser.";
-    $("set-key-remove").hidden = !k;
+  // One row per provider: status, key field (password type, stored only on this device), get-a-key link, remove.
+  function renderKeyRows() {
+    const box = $("set-keys"); if (!box) return;
+    box.replaceChildren();
+    for (const [pid, P] of Object.entries(PROVIDERS)) {
+      const k = pkey(pid);
+      const st = h("p", { class: "small" + (k ? " ok" : ""), text: k ? `Connected · key ending ${k.slice(-4)}${KEYINFO[pid] ? " · " + KEYINFO[pid] : ""}` : pid === "anthropic" ? "Not connected. Until you add a key, Jarvis hands your requests to Claude in the browser." : "Not connected" });
+      const inp = h("input", { type: "password", autocomplete: "off", spellcheck: "false", placeholder: P.ph, "aria-label": P.name + " API key" });
+      const go = () => connectProv(pid, inp, st).then((ok) => { if (ok) setTimeout(renderKeyRows, 1600); });
+      inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); go(); } });
+      const row = h("div", { class: "keyrow", "data-p": pid, style: `--c:${P.color}` },
+        h("div", { class: "kh" }, h("b", null, h("i", { class: "pdot" }), P.name), h("span", { class: "small", text: P.unlocks })),
+        st,
+        h("div", { class: "field" }, inp, h("button", { class: "send", type: "button", text: k ? "Replace" : "Connect", onclick: go })),
+        h("div", { class: "acts" },
+          h("a", { class: "link", href: P.keys, target: "_blank", rel: "noopener", text: "Get a key ↗" }),
+          k ? h("button", { class: "link", type: "button", text: "Remove key", onclick: () => { store.set(P.store, null); renderKeyRows(); applyPrefs(); } }) : null));
+      if (pid === "openrouter") row.append(customField());
+      box.append(row);
+    }
+  }
+  // Any OpenRouter model as its own brain card. The model list is public, so it loads without a key.
+  const OR_LIST = { list: null };
+  async function orModels() {
+    if (OR_LIST.list) return OR_LIST.list;
+    try {
+      const j = await fetch("https://openrouter.ai/api/v1/models").then((r) => r.json());
+      OR_LIST.list = (j.data || []).filter((m) => m && m.id && !/:(batch)$/.test(m.id)).map((m) => ({ id: m.id, name: String(m.name || m.id).replace(/^[^:]{1,40}:\s*/, ""), inP: Number((m.pricing || {}).prompt) * 1e6 || 0, outP: Number((m.pricing || {}).completion) * 1e6 || 0 }));
+    } catch (e) { OR_LIST.list = []; }
+    return OR_LIST.list;
+  }
+  function customField() {
+    const c = jget("jarvis.brain.custom");
+    const dl = h("datalist", { id: "or-models" });
+    const inp = h("input", { type: "text", list: "or-models", placeholder: "e.g. x-ai/grok-4.7", "aria-label": "Custom OpenRouter model id", value: (c && c.model) || "", spellcheck: "false", autocomplete: "off" });
+    const st = h("p", { class: "small", text: c && c.model ? `Custom brain: ${c.name} · $${(+c.inP).toFixed(2)} in / $${(+c.outP).toFixed(2)} out per million tokens` : "Type or pick any model on OpenRouter and it appears as its own brain card." });
+    inp.addEventListener("focus", () => orModels().then((l) => { if (!dl.children.length) dl.append(...l.map((m) => h("option", { value: m.id, text: m.name }))); }), { once: true });
+    const save = async () => {
+      const id = inp.value.trim();
+      if (!id) { store.set("jarvis.brain.custom", null); st.className = "small"; st.textContent = "Custom brain removed."; applyPrefs(); return; }
+      const l = await orModels(), m = l.find((x) => x.id === id);
+      if (l.length && !m) { st.className = "small bad"; st.textContent = "OpenRouter doesn't list that model id. Pick one from the list."; return; }
+      const name = m ? m.name.slice(0, 26) : id.split("/").pop();
+      store.set("jarvis.brain.custom", JSON.stringify({ model: id, name, inP: m ? m.inP : 0, outP: m ? m.outP : 0 }));
+      st.className = "small ok"; st.textContent = `Saved · “${name}” is now a brain card${pkey("openrouter") ? "" : " (it needs the OpenRouter key above)"}.`;
+      applyPrefs();
+    };
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); save(); } });
+    return h("div", { class: "custom" }, h("span", { class: "small", text: "Custom brain" }), h("div", { class: "field" }, inp, h("button", { class: "send", type: "button", text: "Save", onclick: save })), dl, st);
+  }
+  function fillSettings() { renderKeyRows(); }
+  function openKeys(pid) {
+    const dlg = $("settings");
+    fillSettings(); applyPrefs();
+    if (!dlg.open) { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", ""); }
+    const row = (pid && document.querySelector(`.keyrow[data-p="${pid}"]`)) || $("set-keys");
+    if (row) {
+      row.scrollIntoView({ block: "center" });
+      const i = row.querySelector("input"); if (i) i.focus({ preventScroll: true });
+      row.classList.add("hl"); setTimeout(() => row.classList.remove("hl"), 1800);
+    }
   }
   function applyPrefs() {
     document.querySelectorAll(".sw[data-pref]").forEach((sw) => sw.setAttribute("aria-checked", pref(sw.dataset.pref) ? "true" : "false"));
     $("rail-tts").setAttribute("aria-checked", pref("jarvis.tts") ? "true" : "false");
-    document.querySelectorAll(".seg button[data-tier]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tier === AI.tier ? "true" : "false"));
     document.querySelectorAll(".seg button[data-persona]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.persona === persona() ? "true" : "false"));
-    $("core-meta").textContent = AI.ready ? MODELS[AI.tier].label + " · online" : "offline";
+    const n = Object.keys(PROVIDERS).filter(pkey).length;
+    $("core-meta").textContent = n ? `${n} provider${n === 1 ? "" : "s"} connected` : "offline";
     renderChips(); renderCost(); renderAll();
+    renderBrainHud();
     if (!CHAT.busy) renderChat();
+    renderArena(); setComposer();
   }
   function wireSettings() {
     const dlg = $("settings");
     $("btn-set").addEventListener("click", () => { fillSettings(); applyPrefs(); if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", ""); });
     document.querySelectorAll(".sw[data-pref]").forEach((sw) => sw.addEventListener("click", () => { const k = sw.dataset.pref; store.set(k, pref(k) ? "0" : "1"); applyPrefs(); }));
     $("rail-tts").addEventListener("click", () => { store.set("jarvis.tts", pref("jarvis.tts") ? "0" : "1"); if (!pref("jarvis.tts") && window.speechSynthesis) window.speechSynthesis.cancel(); applyPrefs(); });
-    $("set-key-save").addEventListener("click", () => connectKey($("set-key"), $("set-key-status")).then(fillSettings));
-    $("set-key").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); connectKey($("set-key"), $("set-key-status")).then(fillSettings); } });
-    $("set-key-remove").addEventListener("click", () => { store.set("jarvis.ak", null); fillSettings(); applyPrefs(); });
     $("set-s2").addEventListener("click", () => openScreen2());
-    document.querySelectorAll(".seg button[data-tier]").forEach((b) => b.addEventListener("click", () => { store.set("jarvis.model", b.dataset.tier); applyPrefs(); }));
     document.querySelectorAll(".seg button[data-persona]").forEach((b) => b.addEventListener("click", () => { store.set("jarvis.persona", b.dataset.persona); applyPrefs(); }));
     $("chk-run").addEventListener("click", runCheck);
+  }
+
+  // ---------- brain HUD: pick one brain, or compare 2–4 side by side ----------
+  const CMP = { run: null, busy: false, ctrl: null, note: null };
+  const ARENA = { lanes: {}, judge: null, rq: 0 };
+  const HUD = { flash: "", flashT: 0, built: false };
+  // The brains that will answer a comparison: the saved picks that have keys, topped up if fewer than two.
+  function cmpSet() {
+    const a = BR.cmp.map(brainById).filter((b) => b && usable(b));
+    if (a.length < 2) {
+      const pool = allBrains().filter(usable), want = Math.min(3, pool.length);
+      for (const b of pool) { if (a.length >= want) break; if (!a.includes(b)) a.push(b); }
+    }
+    return a.slice(0, 4);
+  }
+  function setMode(m) { store.set("jarvis.mode", m === "compare" ? "compare" : "single"); applyPrefs(); }
+  function flashHud(msg) { HUD.flash = msg; clearTimeout(HUD.flashT); HUD.flashT = setTimeout(() => { HUD.flash = ""; renderBrainHud(); }, 4500); renderBrainHud(); }
+  function toggleCmp(id) {
+    let a = cmpSet().map((b) => b.id);
+    if (a.includes(id)) { if (a.length <= 2) { flashHud("Compare needs at least two brains."); return; } a = a.filter((x) => x !== id); }
+    else { if (a.length >= 4) { flashHud("Four brains at most. Tap one to remove it first."); return; } a.push(id); }
+    store.set("jarvis.cmp", JSON.stringify(a)); sfx.blip(); applyPrefs();
+  }
+  function pickBrain(b) {
+    if (!usable(b)) { openKeys(b.p); return; }
+    if (BR.mode === "compare") { toggleCmp(b.id); return; }
+    store.set("jarvis.brain", b.id);
+    if (b.tools) store.set("jarvis.brain.claude", b.id);
+    sfx.blip();
+    if (b.outP >= 40) flashHud(`${b.name} is a premium brain: about ${fmtUsd(estCost(b, ctxTok()))} per question.`);
+    applyPrefs();
+  }
+  const ctxTok = () => estTok(sysPrompt(false)) + 150;
+  function buildCore() {
+    const svg = sv("svg", { viewBox: "0 0 120 120", "aria-hidden": "true" });
+    const defs = sv("defs"), g = sv("radialGradient", { id: "bhg" });
+    g.append(sv("stop", { offset: "0", "stop-color": "currentColor", "stop-opacity": "0.95" }), sv("stop", { offset: "0.6", "stop-color": "currentColor", "stop-opacity": "0.35" }), sv("stop", { offset: "1", "stop-color": "currentColor", "stop-opacity": "0" }));
+    defs.append(g); svg.append(defs);
+    svg.append(sv("circle", { cx: 60, cy: 60, r: 44, fill: "url(#bhg)", opacity: "0.18" }));
+    const r1 = sv("g", { class: "c-spin" });
+    r1.append(sv("circle", { cx: 60, cy: 60, r: 57, fill: "none", stroke: "currentColor", "stroke-opacity": "0.45", "stroke-width": "1", "stroke-dasharray": "1.5 5" }));
+    svg.append(r1);
+    const r2 = sv("g", { class: "c-spin rev" });
+    for (let i = 0; i < 3; i++) {
+      const a0 = (i * 120 + 8) * Math.PI / 180, a1 = (i * 120 + 92) * Math.PI / 180, R = 50;
+      r2.append(sv("path", { d: `M${60 + R * Math.cos(a0)} ${60 + R * Math.sin(a0)} A${R} ${R} 0 0 1 ${60 + R * Math.cos(a1)} ${60 + R * Math.sin(a1)}`, fill: "none", stroke: "currentColor", "stroke-width": "2.2", "stroke-linecap": "round", opacity: "0.85" }));
+    }
+    svg.append(r2);
+    const ticks = sv("g", { opacity: "0.45" });
+    for (let i = 0; i < 48; i++) {
+      const a = i * 7.5 * Math.PI / 180, r0 = i % 4 ? 40 : 37.5;
+      ticks.append(sv("line", { x1: 60 + r0 * Math.cos(a), y1: 60 + r0 * Math.sin(a), x2: 60 + 42.5 * Math.cos(a), y2: 60 + 42.5 * Math.sin(a), stroke: "currentColor", "stroke-width": i % 4 ? "0.7" : "1.3" }));
+    }
+    svg.append(ticks);
+    svg.append(sv("g", { class: "c-orb", id: "bh-orb" }));
+    const nuc = sv("g", { class: "c-nuc" });
+    const hex = Array.from({ length: 6 }, (_, i) => { const a = (i * 60 - 90) * Math.PI / 180; return `${60 + 20 * Math.cos(a)},${60 + 20 * Math.sin(a)}`; }).join(" ");
+    nuc.append(sv("polygon", { points: hex, fill: "url(#bhg)", stroke: "currentColor", "stroke-width": "1.4" }));
+    const t = sv("text", { x: 60, y: 60, "text-anchor": "middle", "dominant-baseline": "central", id: "bh-glyph", fill: "#021018", "font-family": "Oxanium, system-ui, sans-serif", "font-weight": "700", "font-size": "15" });
+    nuc.append(t); svg.append(nuc);
+    $("bh-core").append(svg);
+    HUD.built = true;
+  }
+  function renderBrainHud() {
+    const hud = $("brainhud"); if (!hud) return;
+    if (!HUD.built) buildCore();
+    const cmp = BR.mode === "compare", cur = curBrain(), set = cmpSet(), ctx = ctxTok();
+    const col = !AI.ready ? "#45647a" : cmp ? "#49d3ff" : PROVIDERS[cur.p].color;
+    hud.style.setProperty("--bc", col);
+    hud.classList.toggle("busy", CHAT.busy || CMP.busy);
+    hud.classList.toggle("cmp", cmp);
+    $("bh-glyph").textContent = !AI.ready ? "—" : cmp ? "×" + set.length : PROVIDERS[cur.p].glyph;
+    const orb = $("bh-orb"); orb.replaceChildren();
+    const nodes = !AI.ready ? [] : cmp ? set : [cur];
+    nodes.forEach((b, i) => {
+      const a = (i / nodes.length) * Math.PI * 2 - Math.PI / 2;
+      orb.append(sv("circle", { cx: 60 + 50 * Math.cos(a), cy: 60 + 50 * Math.sin(a), r: cmp ? 4.2 : 3.4, fill: PROVIDERS[b.p].color, stroke: "#04080d", "stroke-width": "1.5" }));
+    });
+    $("bh-kicker").textContent = !AI.ready ? "Neural core · offline" : cmp ? `Neural core · compare · ${set.length} brains` : `Neural core · ${cur.tools ? "actions online" : "text only"}`;
+    $("bh-name").textContent = !AI.ready ? "No brain connected" : cmp ? set.map((b) => b.name).join("  ·  ") : cur.name;
+    const meta = $("bh-meta");
+    meta.classList.toggle("warn", !!HUD.flash);
+    if (HUD.flash) meta.textContent = HUD.flash;
+    else if (!AI.ready) meta.textContent = "Add an API key to bring Jarvis online.";
+    else if (cmp) meta.textContent = `≈ ${fmtUsd(set.reduce((s, b) => s + estCost(b, ctx), 0))} per comparison · tap brains to choose 2–4`;
+    else { const rt = routeOf(cur); meta.textContent = `${cur.tag}${rt.via !== cur.p ? " · via OpenRouter" : ""} · ≈ ${fmtUsd(estCost(cur, ctx))} per question`; }
+    hud.querySelectorAll(".seg button[data-mode]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.mode === BR.mode ? "true" : "false"));
+    const ids = set.map((b) => b.id), grid = $("bh-grid");
+    grid.replaceChildren(...allBrains().map((b) => {
+      const P = PROVIDERS[b.p], rt = routeOf(b), on = AI.ready && (cmp ? ids.includes(b.id) : cur.id === b.id);
+      const state = !rt ? "Add key" : rt.via !== b.p ? "Via OpenRouter" : b.tools ? "Actions" : "Chat";
+      return h("button", { class: "bcard" + (rt ? "" : " locked"), type: "button", style: `--c:${P.color}`, "aria-pressed": on ? "true" : "false", title: rt ? `${b.name} · ${b.model} · $${b.inP} in / $${b.outP} out per million tokens` : `Add a ${P.name} key to use ${b.name}`, onclick: () => pickBrain(b) },
+        h("span", { class: "bn", text: b.name }),
+        h("span", { class: "bt", text: b.tag }),
+        h("span", { class: "bp" }, h("span", { text: rt ? "≈ " + fmtUsd(estCost(b, ctx)) : P.short }), h("i", { text: state })),
+        cmp && rt ? h("span", { class: "slot", text: on ? String(ids.indexOf(b.id) + 1) : "" }) : null);
+    }));
+  }
+  function wireBrain() {
+    const hud = $("brainhud");
+    hud.querySelectorAll(".seg button[data-mode]").forEach((b) => b.addEventListener("click", () => { if (CMP.busy || CHAT.busy) return; setMode(b.dataset.mode); sfx.blip(); }));
+    $("bh-keys").addEventListener("click", () => openKeys());
+    const tog = () => { const open = !hud.classList.contains("open"); hud.classList.toggle("open", open); $("bh-tog").setAttribute("aria-expanded", open ? "true" : "false"); store.set("jarvis.bh.open", open ? "1" : "0"); };
+    $("bh-tog").addEventListener("click", tog);
+    $("bh-core").addEventListener("click", () => { if (matchMedia("(max-width: 760px)").matches) tog(); else { const b = curBrain(); if (b && BR.mode === "single") flashHud(`${b.name} · ${b.model} · $${b.inP} in / $${b.outP} out per million tokens`); } });
+    const open = store.get("jarvis.bh.open") === "1";
+    hud.classList.toggle("open", open); $("bh-tog").setAttribute("aria-expanded", open ? "true" : "false");
+    // The chat panel shrinks by the HUD's height so the composer stays on screen.
+    if ("ResizeObserver" in window) new ResizeObserver(() => document.documentElement.style.setProperty("--bh", (hud.offsetHeight ? hud.offsetHeight + 20 : 0) + "px")).observe(hud);
+    const last = jget("jarvis.cmp.last");
+    if (last && Array.isArray(last.lanes)) { last.lanes.forEach((l) => { if (l.st === "run") l.st = l.text ? "stopped" : "err"; if (l.st === "err" && !l.err) l.err = "Interrupted."; }); if (last.judge && last.judge.st === "run") last.judge.st = "stopped"; CMP.run = last; }
+  }
+
+  // ---------- compare arena ----------
+  function saveRun() {
+    const r = CMP.run;
+    if (!r) { store.set("jarvis.cmp.last", null); return; }
+    try { store.set("jarvis.cmp.last", JSON.stringify({ q: r.q, at: r.at, win: r.win, fast: r.fast, cheap: r.cheap, judge: r.judge, lanes: r.lanes.map((l) => ({ id: l.id, text: String(l.text || "").slice(0, 16000), st: l.st, ms: l.ms, first: l.first, usage: l.usage, cost: l.cost, err: l.err })) })); } catch (e) { /* storage full: keep it in memory only */ }
+  }
+  async function runLane(run, ln, system, signal) {
+    const b = brainById(ln.id), t0 = performance.now();
+    ln.st = "run"; ln.text = ""; ln.err = null; ln.usage = null; ln.cost = 0; ln.first = 0;
+    if (CMP.run === run) paintLane(ln);
+    try {
+      if (!b) throw { message: "This brain isn't available anymore." };
+      const res = await streamBrain(b, { system, msgs: [{ role: "user", text: run.q }], signal, onText: (t) => { ln.text = t; laneDirty(ln); } });
+      ln.text = res.text; ln.usage = res.usage; ln.first = res.first; ln.cost = costOf(res.usage, b); addCost(res.usage, b); ln.st = "done";
+    } catch (e) {
+      if (e && e.name === "AbortError") ln.st = "stopped"; else { ln.st = "err"; ln.err = (e && e.message) || "Failed."; }
+    }
+    ln.ms = performance.now() - t0;
+    if (CMP.run === run) { paintLane(ln); paintHead(); }
+  }
+  function finishRun(run) {
+    CMP.busy = false; CMP.ctrl = null;
+    const ok = run.lanes.filter((l) => l.st === "done");
+    run.fast = ok.length > 1 ? ok.reduce((a, l) => l.ms < a.ms ? l : a).id : null;
+    run.cheap = ok.length > 1 ? ok.reduce((a, l) => l.cost < a.cost ? l : a).id : null;
+    saveRun(); setComposer(); renderBrainHud();
+    if (CMP.run === run) renderArena();
+  }
+  async function runCompare(q) {
+    q = String(q || "").trim();
+    if (!q || CMP.busy || CHAT.busy) return;
+    const set = cmpSet();
+    if (set.length < 2) { CMP.note = "Compare needs at least two brains with keys. Add another provider under API keys."; renderArena(); return; }
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    const run = { q, at: Date.now(), lanes: set.map((b) => ({ id: b.id, text: "", st: "run", ms: 0, first: 0, usage: null, cost: 0, err: null })), judge: null, win: null, fast: null, cheap: null };
+    CMP.run = run; CMP.note = null; CMP.busy = true; CMP.ctrl = new AbortController();
+    setComposer(); renderBrainHud(); renderArena(); sfx.blip();
+    const system = sysPrompt(false) + "\n\n" + CMP_RULE, signal = CMP.ctrl.signal;
+    await Promise.all(run.lanes.map((ln) => runLane(run, ln, system, signal)));
+    finishRun(run);
+  }
+  async function retryLane(ln) {
+    const run = CMP.run; if (!run || CMP.busy || CHAT.busy) return;
+    CMP.busy = true; CMP.ctrl = new AbortController(); run.win = null; run.judge = null;
+    setComposer(); renderBrainHud(); renderArena();
+    await runLane(run, ln, sysPrompt(false) + "\n\n" + CMP_RULE, CMP.ctrl.signal);
+    finishRun(run);
+  }
+  function judgeBrain() {
+    const b = brainById(store.get("jarvis.judge"));
+    if (b && usable(b)) return b;
+    return ["claude-smart", "claude-fast", "gpt-sol", "gem-argon"].map(brainById).find((x) => x && usable(x)) || allBrains().find(usable) || null;
+  }
+  async function runJudge() {
+    const run = CMP.run; if (!run || CMP.busy || CHAT.busy) return;
+    const done = run.lanes.filter((l) => l.st === "done" && String(l.text || "").trim());
+    const jb = judgeBrain(); if (done.length < 2 || !jb) return;
+    const names = done.map((l) => (brainById(l.id) || { name: l.id }).name);
+    run.judge = { id: jb.id, text: "", st: "run" }; run.win = null;
+    CMP.busy = true; CMP.ctrl = new AbortController(); setComposer(); renderBrainHud(); renderArena();
+    const prompt = `Gil asked:\n"""${run.q}"""\n\n` + done.map((l, i) => `### Answer ${i + 1} — ${names[i]}\n${l.text}`).join("\n\n") +
+      `\n\nCompare these answers for him in 3 to 5 short bullets: which one is the most accurate and useful and why, the key differences, and anything wrong, missing or made up. Judge on substance, not length or style, and don't favour any company's model, including your own. Finish with one line exactly like "Verdict: <name> — <reason in a few words>", where <name> is one of: ${names.join(", ")}.`;
+    try {
+      const res = await streamBrain(jb, { system: `You are an impartial judge comparing AI answers for Gil. Be concise, concrete and fair. Today is ${new Date().toDateString()}.`, msgs: [{ role: "user", text: prompt }], signal: CMP.ctrl.signal, maxTokens: jb.p === "anthropic" ? 900 : 3000, onText: (t) => { run.judge.text = t; paintJudge(); } });
+      run.judge.text = res.text; run.judge.st = "done"; run.judge.cost = costOf(res.usage, jb); addCost(res.usage, jb);
+      const v = (res.text.match(/verdict:\s*(.+)$/im) || [])[1] || "";
+      const byName = done.map((l, i) => ({ l, n: names[i].toLowerCase() })).sort((a, b) => b.n.length - a.n.length).find((x) => v.toLowerCase().includes(x.n));
+      const byNum = /answer\s*(\d)/i.exec(v);
+      run.win = byName ? byName.l.id : byNum && done[+byNum[1] - 1] ? done[+byNum[1] - 1].id : null;
+    } catch (e) { run.judge.st = e && e.name === "AbortError" ? "stopped" : "err"; run.judge.err = (e && e.message) || "The judge didn't answer."; }
+    CMP.busy = false; CMP.ctrl = null; saveRun(); setComposer(); renderBrainHud(); renderArena();
+  }
+  function continueWith(ln) {
+    const run = CMP.run; if (!run || CHAT.busy || CMP.busy) return;
+    CHAT.msgs.push({ role: "user", content: run.q }, { role: "assistant", content: [{ type: "text", text: ln.text }], _brain: ln.id });
+    chatSave(); link("chat");
+    store.set("jarvis.brain", ln.id);
+    const b = brainById(ln.id); if (b && b.tools) store.set("jarvis.brain.claude", b.id);
+    setMode("single"); renderChat(true); $("chat-in").focus();
+  }
+  function copyText(text, btn) {
+    const done = () => { const t = btn.textContent; btn.textContent = "Copied"; setTimeout(() => { btn.textContent = t; }, 1300); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => { btn.textContent = "Copy failed"; });
+  }
+  function laneDirty(ln) {
+    ln._dirty = true;
+    if (!ARENA.rq) ARENA.rq = requestAnimationFrame(() => { ARENA.rq = 0; if (CMP.run) for (const l of CMP.run.lanes) if (l._dirty) { l._dirty = false; paintLane(l); } });
+  }
+  function laneEl(ln) {
+    const b = brainById(ln.id) || { name: ln.id, p: "openrouter", model: "" }, P = PROVIDERS[b.p];
+    const ref = { st: h("span", { class: "ls" }), think: h("div", { class: "think", "aria-hidden": "true" }), body: h("div", { class: "lb", dir: "auto", tabindex: "0" }), foot: h("div", { class: "lf" }) };
+    ref.el = h("section", { class: "lane", style: `--c:${P.color}`, "aria-label": b.name }, h("div", { class: "lh" }, h("b", { text: b.name, title: b.model }), ref.st), ref.think, ref.body, ref.foot);
+    ARENA.lanes[ln.id] = ref;
+    paintLane(ln);
+    return ref.el;
+  }
+  function paintLane(ln) {
+    const ref = ARENA.lanes[ln.id], run = CMP.run; if (!ref || !run) return;
+    ref.el.classList.toggle("win", run.win === ln.id);
+    ref.think.classList.toggle("off", ln.st !== "run");
+    ref.st.className = "ls" + (ln.st === "run" ? " run" : ln.st === "err" ? " bad" : "");
+    ref.st.textContent = ln.st === "run" ? (ln.text ? "Streaming" : "Thinking") : ln.st === "done" ? secs(ln.ms) : ln.st === "stopped" ? "Stopped" : "Error";
+    const body = ref.body, near = body.scrollHeight - body.scrollTop - body.clientHeight < 60;
+    body.replaceChildren();
+    if (ln.text) body.append(md(ln.text));
+    if (ln.st === "run") body.append(ln.text ? h("span", { class: "caret", "aria-hidden": "true" }) : h("p", { class: "note", text: "Thinking…" }));
+    if (ln.err) body.append(h("p", { class: "notice", text: ln.err }));
+    if (ln.st === "run" && near) body.scrollTop = body.scrollHeight;
+    ref.foot.replaceChildren();
+    const b = brainById(ln.id);
+    if ((ln.st === "done" || ln.st === "stopped") && ln.text) {
+      const tags = [run.win === ln.id && "Judge's pick", run.fast === ln.id && "Fastest", run.cheap === ln.id && "Cheapest"].filter(Boolean);
+      ref.foot.append(
+        h("div", { class: "stats", title: ln.first ? "First word after " + secs(ln.first) : null }, h("span", { text: secs(ln.ms) }), ln.usage ? h("span", { text: `${fmtK(ln.usage.in)} in · ${fmtK(ln.usage.out)} out` }) : null, h("span", { class: "cost", text: fmtUsd(ln.cost) }), tags.map((t) => h("span", { class: "bdg", text: t }))),
+        h("div", { class: "lrow" },
+          b ? h("button", { class: "btn", type: "button", text: "Continue with this", disabled: CMP.busy || CHAT.busy, onclick: () => continueWith(ln) }) : null,
+          h("button", { class: "btn", type: "button", text: "Copy", onclick: (e) => copyText(ln.text, e.currentTarget) })));
+    } else if (ln.st === "err" || (ln.st === "stopped" && !ln.text)) {
+      ref.foot.append(h("div", { class: "acts" }, b && usable(b) ? h("button", { class: "btn", type: "button", text: "Retry", disabled: CMP.busy || CHAT.busy, onclick: () => retryLane(ln) }) : null, ln.err && /key/i.test(ln.err) && b ? h("button", { class: "btn", type: "button", text: "API keys", onclick: () => openKeys(b.p) }) : null));
+    }
+  }
+  function runMeta(run) {
+    const busy = run.lanes.some((l) => l.st === "run");
+    const cost = run.lanes.reduce((s, l) => s + (l.cost || 0), 0) + ((run.judge && run.judge.cost) || 0);
+    const t = Math.max(0, ...run.lanes.map((l) => l.ms || 0));
+    return busy ? `${run.lanes.filter((l) => l.st === "run").length} of ${run.lanes.length} brains working…` : `${run.lanes.length} brains · ${secs(t)} · ${fmtUsd(cost)} total`;
+  }
+  function paintHead() { const m = $("arena-meta"); if (m && CMP.run) m.textContent = runMeta(CMP.run); }
+  function paintJudge() {
+    const box = ARENA.judge, run = CMP.run; if (!box || !run || !run.judge) return;
+    const jb = brainById(run.judge.id);
+    box.replaceChildren(
+      h("div", { class: "vh" }, h("span", { class: "sub", text: "Judge · " + (jb ? jb.name : run.judge.id) + (run.judge.cost ? " · " + fmtUsd(run.judge.cost) : "") }), judgeBar(run) || ""),
+      run.judge.text ? md(run.judge.text) : h("p", { class: "note", text: run.judge.st === "run" ? "Weighing the answers…" : "" }),
+      run.judge.err ? h("p", { class: "notice", text: run.judge.err }) : "");
+  }
+  function judgeBar(run) {
+    const done = run.lanes.filter((l) => l.st === "done" && l.text).length;
+    if (done < 2 || CMP.busy) return null;
+    const pool = allBrains().filter(usable), jb = judgeBrain();
+    const sel = h("select", { "aria-label": "Judge brain", onchange: (e) => { store.set("jarvis.judge", e.target.value); } }, pool.map((b) => h("option", { value: b.id, text: b.name, selected: jb && jb.id === b.id })));
+    return h("div", { class: "judge" }, h("button", { class: "btn pri", type: "button", text: run.judge ? "Judge again" : "Judge the answers", onclick: runJudge }), h("span", { class: "small", text: "Judge:" }), sel);
+  }
+  const CMP_IDEAS = ["What should I focus on today, and why?", "Write a 3-line Hebrew Facebook ad hook for an AI assistant for real-estate agents.", "Give me 5 names for a new melodic techno track.", "Explain the trade-offs of raising my agency's prices by 20%."];
+  function renderArena() {
+    const box = $("arena"), log = $("chat-log"); if (!box || !log) return;
+    const cmp = BR.mode === "compare" && AI.ready;
+    box.hidden = !cmp; log.hidden = cmp;
+    $("chat-title").textContent = cmp ? "Compare" : "Jarvis";
+    $("chat-new").textContent = cmp ? "Clear" : "New chat";
+    if (!cmp) return;
+    const keep = {}; for (const [id, r] of Object.entries(ARENA.lanes)) keep[id] = r.body.scrollTop;
+    box.replaceChildren(); ARENA.lanes = {}; ARENA.judge = null;
+    const run = CMP.run, note = CMP.note ? h("p", { class: "notice", dir: "auto", text: CMP.note }) : null;
+    if (!run) {
+      const set = cmpSet(), est = set.reduce((s, b) => s + estCost(b, ctxTok()), 0);
+      box.append(h("div", { class: "arena-empty" },
+        h("div", { class: "sub", text: "Compare mode" }),
+        h("h3", { text: set.length >= 2 ? `${set.length} brains standing by` : "Add a second brain" }),
+        h("p", { text: "Ask one question and every selected brain answers side by side, with time and cost for each. They all get the same briefing: your calendar, missions, inbox and memory. Then let a judge pick the best answer, or carry on the conversation with the one you like. Compare answers are text only; actions stay with Claude." }),
+        h("div", { class: "roster" }, set.map((b) => h("span", { class: "rchip", style: `--c:${PROVIDERS[b.p].color}`, text: b.name }))),
+        set.length >= 2 ? h("p", { class: "small", text: `About ${fmtUsd(est)} per comparison with this lineup.` }) : h("p", { class: "small" }, "Connect another provider under ", h("button", { class: "link", type: "button", text: "API keys", onclick: () => openKeys() }), "."),
+        note,
+        set.length >= 2 ? h("div", { class: "chips" }, CMP_IDEAS.map((q) => h("button", { class: "chip", type: "button", text: q, onclick: () => runCompare(q) }))) : null));
+      return;
+    }
+    const lanes = h("div", { class: "lanes", style: `--n:${run.lanes.length}` }, run.lanes.map(laneEl));
+    const head = h("div", { class: "arena-q" }, h("p", { dir: "auto", text: run.q }), h("span", { class: "meta", id: "arena-meta", text: runMeta(run) }));
+    const foot = h("div", { class: "arena-foot" });
+    if (run.judge) { ARENA.judge = h("div", { class: "verdict", "aria-live": "polite" }); foot.append(ARENA.judge); }
+    else { const jbar = judgeBar(run); if (jbar) foot.append(jbar); }
+    if (note) foot.append(note);
+    box.append(head, lanes, foot);
+    paintJudge();
+    for (const [id, top] of Object.entries(keep)) if (ARENA.lanes[id]) ARENA.lanes[id].body.scrollTop = top;
   }
 
   // ---------- boot & power ----------
@@ -2171,7 +2878,7 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
       ["Mail relay", async () => { await data(); return S.mail ? [`Online · ${mailCount()} unread`, "ok"] : [AUTH.ok ? "Offline" : "Sign-in needed", "warn"]; }],
       ["Mission database", async () => { await data(); return S.hub ? [`Synced · ${openCount("today")} open`, "ok"] : ["Offline", "warn"]; }],
       ["Voice interface", async () => SR ? ["Ready", "ok"] : ["Keyboard only", "warn"]],
-      ["Neural core", async () => AI.ready ? [`Online · ${MODELS[AI.tier].label}`, "ok"] : ["Standby · no key", "warn"]]
+      ["Neural core", async () => { const n = Object.keys(PROVIDERS).filter(pkey).length; return AI.ready ? [`Online · ${AI.brain.name}${n > 1 ? ` · ${n} providers` : ""}`, "ok"] : ["Standby · no key", "warn"]; }]
     ];
     let warn = 0;
     await wait(650);
@@ -2279,7 +2986,7 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
   }
 
   // ---------- system check ----------
-  const BUILD = "2026-10-16.2";
+  const BUILD = "2026-10-17.1";
   async function runCheck() {
     const out = $("chk-out"), sum = $("chk-sum"), btn = $("chk-run");
     out.replaceChildren(); sum.textContent = ""; btn.disabled = true; btn.textContent = "Checking…";
@@ -2309,7 +3016,7 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
       const hrsAgo = (Date.now() - at) / 3600000;
       return hrsAgo < 30 ? ["pass", `Last synced ${at.toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" })}`] : ["warn", `Last synced ${Math.round(hrsAgo / 24)} days ago. The morning brief can't reach Google Sheets yet.`];
     });
-    if (!AI.ready) add("Neural core", "warn", "No Claude API key yet. Connect one in the Jarvis tab.");
+    if (!AI.claude) add("Claude brain", "warn", "No Claude key yet. Actions, the written brief and news need one. Add it under API keys.");
     else {
       await t("API key · Fast brain", async () => { await tiny(MODELS.fast.id); return ["pass", `Key works · ${MODELS.fast.id} answers`]; });
       await t("Smart brain", async () => { await tiny(MODELS.smart.id); return ["pass", `${MODELS.smart.id} answers`]; });
@@ -2317,7 +3024,13 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
         try { await tiny(MODELS.fast.id, { tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 1 }] }); return ["pass", "Web search is on"]; }
         catch (e) { if (/not enabled|disabled/i.test(e.raw || "")) return ["fail", "Web search is off. Turn it on at platform.claude.com/settings/capabilities."]; throw e; }
       });
+      await t("Opus brain", async () => { await tiny("claude-opus-5-5"); return ["pass", "claude-opus-5-5 answers"]; });
     }
+    for (const pid of ["openai", "google", "openrouter"]) {
+      const k = pkey(pid); if (!k) continue;
+      await t(PROVIDERS[pid].name + " brain", async () => { const info = await testKey(pid, k); return ["pass", "Key works" + (info ? " · " + info : "")]; });
+    }
+    if (AI.ready) add("Selected brain", "pass", `${AI.brain.name} (${routeOf(AI.brain).model})${BR.mode === "compare" ? ` · compare mode with ${cmpSet().map((b) => b.name).join(", ")}` : ""}`);
     await t("Microphone", async () => {
       if (!SR) return ["warn", "Voice input isn't supported in this browser. Use Chrome."];
       let st = "prompt"; try { st = (await navigator.permissions.query({ name: "microphone" })).state; } catch (e) { /* not supported */ }
@@ -2423,16 +3136,16 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
     body.replaceChildren(); acts.replaceChildren();
     const b = readJSON("jarvis.brief");
     const ai = b && b.day === keyOf(new Date()) && b.text ? b : null;
-    if (AI.ready) acts.append(h("button", { class: "btn", type: "button", text: BRIEF.busy ? "Writing…" : (ai ? "Rewrite" : "Write brief"), disabled: BRIEF.busy, onclick: () => genBrief(true) }));
+    if (AI.claude) acts.append(h("button", { class: "btn", type: "button", text: BRIEF.busy ? "Writing…" : (ai ? "Rewrite" : "Write brief"), disabled: BRIEF.busy, onclick: () => genBrief(true) }));
     if (ai) { body.append(md(ai.text), h("div", { class: "foot2", text: `Written by Jarvis at ${hm(new Date(ai.at))}` })); return; }
     const g = glance();
     body.append(g ? md(g) : h("p", { class: "note", text: !AUTH.ok ? "Sign in with Google and your brief appears here." : "Loading your day…" }));
     if (BRIEF.busy) body.append(h("div", { class: "foot2", text: "Jarvis is writing today's brief…" }));
     else if (BRIEF.err) body.append(h("div", { class: "foot2", style: "color:var(--amber)", text: BRIEF.err }));
-    else if (!AI.ready) body.append(h("div", { class: "foot2" }, "Connect Jarvis's brain in the ", h("a", { href: "#", style: "color:var(--arc)", onclick: (e) => { e.preventDefault(); showView("jarvis"); }, text: "Jarvis tab" }), " for a written brief."));
+    else if (!AI.claude) body.append(h("div", { class: "foot2" }, "Connect a Claude key under ", h("a", { href: "#", style: "color:var(--arc)", onclick: (e) => { e.preventDefault(); openKeys("anthropic"); }, text: "API keys" }), " for a written brief."));
   }
   async function genBrief(force) {
-    if (!AI.ready || BRIEF.busy) return;
+    if (!AI.claude || BRIEF.busy) return;
     const day = keyOf(new Date()), b = readJSON("jarvis.brief");
     if (!force && b && b.day === day) return;
     if (!S.cal && !S.hub) return;
@@ -2487,9 +3200,9 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
     const body = $("d-news"), meta = $("d-news-meta"), btn = $("d-news-refresh");
     body.replaceChildren();
     const tp = topics(), n = readJSON("jarvis.news");
-    btn.hidden = !AI.ready; btn.disabled = NEWS.busy; btn.textContent = NEWS.busy ? "Searching…" : "Refresh";
+    btn.hidden = !AI.claude; btn.disabled = NEWS.busy; btn.textContent = NEWS.busy ? "Searching…" : "Refresh";
     meta.textContent = n && n.at ? `Updated ${n.day === keyOf(new Date()) ? hm(new Date(n.at)) : new Date(n.at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : "";
-    if (!AI.ready) { body.append(h("p", { class: "note", text: "Tap a topic to open it in Google News. Connect Jarvis's brain in the Jarvis tab and he'll pick the stories that matter to you each morning." })); return; }
+    if (!AI.claude) { body.append(h("p", { class: "note", text: "Tap a topic to open it in Google News. Connect a Claude key (Settings → API keys) and Jarvis picks the stories that matter to you each morning." })); return; }
     if (NEWS.err) body.append(h("p", { class: "notice", text: NEWS.err }));
     if (n && Array.isArray(n.items) && n.items.length) {
       if (n.key !== tp.join("|")) body.append(h("p", { class: "small", text: "Topics changed. Press Refresh to update the stories." }));
@@ -2518,7 +3231,7 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
     return out;
   }
   async function fetchNews(force) {
-    if (!AI.ready || NEWS.busy) return;
+    if (!AI.claude || NEWS.busy) return;
     const tp = topics(); if (!tp.length) return;
     const key = tp.join("|"), day = keyOf(new Date()), n = readJSON("jarvis.news");
     if (!force && n && n.day === day) return;
@@ -2548,7 +3261,7 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
     } finally { NEWS.busy = false; store.set("jarvis.news.lock", null); renderNews(); }
   }
   function autoDash() {
-    if (!dashVisible() || !AI.ready || !(S.cal || S.hub)) return;
+    if (!dashVisible() || !AI.claude || !(S.cal || S.hub)) return;
     genBrief(false); fetchNews(false);
   }
   function renderAsk() {
@@ -2644,7 +3357,7 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
   if (IS_S2) { $("s2tag").hidden = false; $("btn-s2").hidden = true; document.title = "Jarvis · Display 2"; }
   $("btn-s2").addEventListener("click", () => openScreen2());
   chatLoad();
-  buildDial(); wireCmd(); wireVoice(); wireChat(); wireDash(); wireSettings(); wirePower(); wireLink();
+  buildDial(); wireCmd(); wireVoice(); wireChat(); wireDash(); wireSettings(); wireBrain(); wirePower(); wireLink();
   wireTabs();
   dayKey = keyOf(S.now);
   applyPrefs();
