@@ -729,6 +729,46 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
 }
 
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* ---------- v2 sidebar ---------- */
+@media (max-width: 1239px) { .vcard { display: none !important; } }
+.sidelogo { display: none; }
+.tgrp { display: none; }
+.focusbtn { display: none; }
+@media (min-width: 1240px) {
+  .wrap { grid-template-columns: 232px minmax(0, 1fr); }
+  .wrap > .bar .mark { display: none; }
+  .wrap > .side { grid-row: 1 / span 3; max-height: calc(100vh - 32px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #143247 transparent; padding-right: 2px; }
+  .wrap > .bar { grid-column: 2; }
+  .wrap > .view { grid-row: 2; }
+  .wrap > .foot { grid-row: 3; }
+  .sidelogo { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid rgba(73, 211, 255, 0.28); border-radius: 9px; background: linear-gradient(180deg, rgba(14, 38, 62, 0.72), rgba(7, 20, 36, 0.8)); }
+  .sidelogo .mk-ic { width: 40px; height: 40px; flex: none; filter: drop-shadow(0 0 6px rgba(73, 211, 255, 0.5)); }
+  .sidelogo .mk { display: flex; flex-direction: column; line-height: 1.1; }
+  .sidelogo .mk b { font: 700 21px var(--f-display); letter-spacing: 0.3em; color: #e6fbff; text-shadow: 0 0 12px rgba(73, 211, 255, 0.6); }
+  .sidelogo .mk small { margin-top: 3px; font: 600 9.5px var(--f-display); letter-spacing: 0.28em; color: #8eabbf; }
+  .tgrp { display: block; padding: 14px 12px 6px; font: 600 10.5px var(--f-display); letter-spacing: 0.18em; text-transform: uppercase; color: #8eabbf; }
+  .focusbtn { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; border: 1px solid rgba(73, 211, 255, 0.3); border-radius: 9px; background: linear-gradient(180deg, rgba(14, 38, 62, 0.72), rgba(7, 20, 36, 0.8)); color: #d9ecf5; font: 500 14.5px var(--f-body); cursor: pointer; }
+  .focusbtn:hover { border-color: var(--arc); color: #e6fbff; }
+  .focusbtn .fi { width: 16px; height: 16px; color: var(--arc); }
+  .side .tab .short { display: none; }
+  .side .tab .full { display: inline; }
+}
+.plan-mis { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.plan-mis .ph h2 { font-size: 12px; }
+/* focus mode */
+.focus { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 24px; background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(18, 70, 110, 0.55), transparent 70%), rgba(3, 8, 14, 0.96); }
+.focus[hidden] { display: none; }
+.focus-in { width: min(560px, 100%); display: grid; justify-items: center; gap: 18px; text-align: center; }
+.focus-k { font: 600 12px var(--f-display); letter-spacing: 0.3em; color: #8eabbf; }
+.focus-clock { font: 700 clamp(44px, 9vw, 76px)/1 var(--f-display); color: #7fe3ff; text-shadow: 0 0 22px rgba(73, 211, 255, 0.7); font-variant-numeric: tabular-nums; }
+.focus-card { width: 100%; display: grid; gap: 6px; padding: 18px 20px; border: 1px solid rgba(73, 211, 255, 0.3); border-radius: 10px; background: linear-gradient(180deg, rgba(14, 38, 62, 0.72), rgba(7, 20, 36, 0.85)); }
+.focus-card h2 { margin: 0; font: 600 26px var(--f-display); color: #e6fbff; }
+.focus-card p { margin: 0; color: #a9c3d2; }
+.focus-timer { display: grid; gap: 4px; }
+.focus-timer b { font: 700 40px var(--f-display); color: #ffb84d; text-shadow: 0 0 14px rgba(255, 184, 77, 0.5); font-variant-numeric: tabular-nums; }
+.focus-acts { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.focus-acts .btn { min-height: 44px; padding: 0 18px; }
+body.focusing { overflow: hidden; }
 /* ---------- v2 command-center skin (matches the Command Center mockup) ---------- */
 body {
   background:
@@ -779,7 +819,7 @@ body {
   .vcard { display: grid; }
   .sidelinks { border-radius: 9px; }
 }
-.vcard { display: none; justify-items: center; gap: 10px; padding: 12px; border: 1px solid rgba(73, 211, 255, 0.28); border-radius: 9px; background: linear-gradient(180deg, rgba(14, 38, 62, 0.72), rgba(7, 20, 36, 0.8)); text-align: center; }
+.vcard { justify-items: center; gap: 10px; padding: 12px; border: 1px solid rgba(73, 211, 255, 0.28); border-radius: 9px; background: linear-gradient(180deg, rgba(14, 38, 62, 0.72), rgba(7, 20, 36, 0.8)); text-align: center; }
 .vcard h2 { margin: 0; justify-self: stretch; text-align: left; font: 600 12px var(--f-display); letter-spacing: 0.16em; text-transform: uppercase; color: #d9ecf5; }
 .vcard .vt { font: 500 11.5px var(--f-mono); color: #bff2ff; }
 .vmic { width: 78px; height: 78px; border-radius: 50%; border: 1px solid var(--arc); background: radial-gradient(circle, rgba(73, 211, 255, 0.45), rgba(9, 44, 70, 0.9) 70%); box-shadow: 0 0 0 7px rgba(73, 211, 255, 0.08), 0 0 0 14px rgba(73, 211, 255, 0.05), 0 0 30px rgba(73, 211, 255, 0.45); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #e6fbff; }
@@ -992,15 +1032,17 @@ body {
   </header>
 
   <nav class="side" aria-label="Jarvis navigation">
+  <div class="sidelogo asm" aria-hidden="true"><svg class="mk-ic" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="#49d3ff" stroke-width="1.4"/><circle cx="20" cy="20" r="12" stroke="#bff2ff" stroke-opacity="0.6" stroke-width="1.2" stroke-dasharray="3 3"/><circle cx="20" cy="20" r="5.5" fill="#49d3ff"/></svg><span class="mk"><b>JARVIS</b><small>COMMAND CENTER</small></span></div>
   <div class="tabs asm" role="tablist" aria-label="Jarvis sections" id="tabs">
-    <button class="tab" type="button" role="tab" id="tab-dash" aria-controls="view-dash" data-view="dash"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span class="full">Dashboard</span><span class="short">Home</span><span class="badge" id="b-dash"></span></button>
-    <button class="tab" type="button" role="tab" id="tab-plan" aria-controls="view-plan" data-view="plan"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17.5" rx="2"/><path d="M9 3.5v2h6v-2"/><path d="M8.5 11.5l2 2 4-4"/><path d="M8.5 17h7"/></svg><span class="full">Daily schedule</span><span class="short">Plan</span><span class="badge" id="b-plan"></span></button>
-    <button class="tab" type="button" role="tab" id="tab-command" aria-controls="view-command" data-view="command"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span class="full">Command</span><span class="short">HUD</span><span class="badge" id="b-command"></span></button>
-    <button class="tab" type="button" role="tab" id="tab-jarvis" aria-controls="view-jarvis" data-view="jarvis"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.8l8 4.6v9.2l-8 4.6-8-4.6V7.4z"/><circle cx="12" cy="12" r="2.6"/></svg>Jarvis<span class="badge" id="b-jarvis"></span></button>
-    <button class="tab" type="button" role="tab" id="tab-health" aria-controls="view-health" data-view="health"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>Health<span class="badge" id="b-health"></span></button>
-    <button class="tab" type="button" role="tab" id="tab-business" aria-controls="view-business" data-view="business"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="1.5"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 12h18"/></svg><span class="full">Business</span><span class="short">Biz</span><span class="badge" id="b-business"></span></button>
-    <button class="tab" type="button" role="tab" id="tab-inbox" aria-controls="view-inbox" data-view="inbox"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l3-8h12l3 8v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13h5l1.5 3h5L16 13h5"/></svg><span class="full">Inbox &amp; Bills</span><span class="short">Inbox</span><span class="badge" id="b-inbox"></span></button>
-    <button class="tab" type="button" role="tab" id="tab-tools" aria-controls="view-tools" data-view="tools"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5 5L4 17l3 3 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/></svg><span class="full">Tools &amp; connections</span><span class="short">Tools</span><span class="badge" id="b-tools"></span></button>
+    <button class="tab" type="button" role="tab" id="tab-dash" aria-controls="view-dash" data-view="dash"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="full">Command Center</span><span class="short">Home</span><span class="badge" id="b-dash"></span></button>
+    <button class="tab" type="button" role="tab" id="tab-jarvis" aria-controls="view-jarvis" data-view="jarvis"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16"/></svg><span class="full">AI Core</span><span class="short">Core</span><span class="badge" id="b-jarvis"></span></button>
+    <button class="tab" type="button" role="tab" id="tab-plan" aria-controls="view-plan" data-view="plan"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l2 2 3.5-3.5M4 13l2 2 3.5-3.5"/><path d="M13 6.5h7M13 13.5h7M4 19.5h16"/></svg><span class="full">Tasks</span><span class="short">Tasks</span><span class="badge" id="b-plan"></span></button>
+    <button class="tab" type="button" role="tab" id="tab-command" aria-controls="view-command" data-view="command"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="full">Calendar</span><span class="short">Cal</span><span class="badge" id="b-command"></span></button>
+    <button class="tab" type="button" role="tab" id="tab-tools" aria-controls="view-tools" data-view="tools"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5 5L4 17l3 3 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/></svg><span class="full">Tools &amp; Skills</span><span class="short">Tools</span><span class="badge" id="b-tools"></span></button>
+    <span class="tgrp" aria-hidden="true">Life &amp; business</span>
+    <button class="tab" type="button" role="tab" id="tab-health" aria-controls="view-health" data-view="health"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg><span class="full">Health</span><span class="short">Health</span><span class="badge" id="b-health"></span></button>
+    <button class="tab" type="button" role="tab" id="tab-business" aria-controls="view-business" data-view="business"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg><span class="full">Business</span><span class="short">Biz</span><span class="badge" id="b-business"></span></button>
+    <button class="tab" type="button" role="tab" id="tab-inbox" aria-controls="view-inbox" data-view="inbox"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span class="full">Inbox &amp; Bills</span><span class="short">Inbox</span><span class="badge" id="b-inbox"></span></button>
   </div>
   <div class="vcard asm" aria-label="Voice">
     <h2>Voice status</h2>
@@ -1009,6 +1051,7 @@ body {
     <button class="vmic" type="button" id="side-mic" aria-label="Tap to speak to Jarvis" title="Tap to speak"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
     <span class="small">Tap to speak</span>
   </div>
+  <button class="focusbtn asm" type="button" id="btn-focus" aria-haspopup="dialog"><svg class="fi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg><span>Focus mode</span></button>
   <div class="sidelinks asm">
     <span class="sub">Quick open</span>
     <a class="slink" id="side-hub" target="_blank" rel="noopener">Jarvis Hub <span aria-hidden="true">↗</span></a>
@@ -1133,6 +1176,7 @@ body {
         <div class="plan-ring" id="plan-ring"></div>
         <div class="plan-next" id="plan-next"></div>
         <div class="pweek" id="plan-week" role="group" aria-label="This week"></div>
+        <div class="plan-mis"><div class="ph"><h2>Missions</h2><span class="meta" id="plan-mis-meta"></span></div><div id="plan-missions"></div></div>
         <div class="plan-foot"><span class="small" id="plan-streak"></span><span class="small" id="plan-sync" aria-live="polite"></span><a class="link" id="plan-full" target="_blank" rel="noopener">Full plan ↗</a></div>
       </aside>
       <div class="plan-main" id="plan-main"></div>
@@ -1361,6 +1405,26 @@ body {
     </section>
   </form>
 </dialog>
+
+<div class="focus" id="focus" hidden role="dialog" aria-modal="true" aria-labelledby="focus-t">
+  <div class="focus-in">
+    <span class="focus-k">FOCUS MODE</span>
+    <div class="focus-clock" id="focus-clock"></div>
+    <div class="focus-card">
+      <span class="meta" id="focus-when"></span>
+      <h2 id="focus-t">Next up</h2>
+      <p id="focus-sub"></p>
+    </div>
+    <div class="focus-timer"><b id="focus-left">25:00</b><span class="small" id="focus-tsub">25-minute focus block</span></div>
+    <div class="focus-acts">
+      <button class="btn pri" type="button" id="focus-go">Start 25 min</button>
+      <button class="btn" type="button" id="focus-done">Mark done</button>
+      <button class="btn" type="button" id="focus-exit">Exit</button>
+    </div>
+    <p class="small" id="focus-next"></p>
+    <p class="small">Esc exits focus mode</p>
+  </div>
+</div>
 
 <script>
 (() => {
@@ -1994,10 +2058,10 @@ body {
   }
   function renderBadges() {
     const set = (id, n, extra, hot) => { const b = $(id); b.textContent = (n ? String(n) : "") + (extra || ""); b.classList.toggle("hot", !!hot); };
-    { const k = planToday(), p = RS.build(fromKey(k)); set("b-plan", p.total - planDone(k, p)); }
-    { const nb = MCP.list.filter((s) => s.on !== false && s.status === "error").length; set("b-tools", mcpReady().length, nb ? ` · ${nb} failed` : "", nb > 0); }
+    set("b-plan", S.hub ? openCount("today") : 0);
+    { const nb = MCP.list.filter((s) => s.on !== false && s.status === "error").length; set("b-tools", TOOLS.length + mcpToolCount(), nb ? ` · ${nb} failed` : "", nb > 0); }
     if (S.hub) {
-      set("b-command", openCount("today"));
+      set("b-command", S.cal ? nowNext(events()).left : 0);
       set("b-health", openCount("health"));
       set("b-business", ["marketing", "music", "ai", "hu"].reduce((a, k) => a + openCount(k), 0));
     }
@@ -3617,7 +3681,17 @@ body {
     if (f > 0) svg.append(sv("circle", { cx: 64, cy: 64, r: R, fill: "none", stroke: f >= 1 ? "#5cf0b0" : "#49d3ff", "stroke-width": "8", "stroke-linecap": "round", "stroke-dasharray": `${C * f} ${C}`, transform: "rotate(-90 64 64)", class: "parc" }));
     return svg;
   }
+  function renderPlanMissions() {
+    const body = $("plan-missions"); if (!body) return;
+    body.replaceChildren();
+    if (!hubState(body)) { $("plan-mis-meta").textContent = ""; return; }
+    const { ul, count } = taskList("today");
+    const done = realItems(S.hub.today).filter((i) => i.done).length;
+    $("plan-mis-meta").textContent = count ? `${done} of ${count} done` : "";
+    body.append(count ? ul : h("p", { class: "note", text: "No missions for today." }));
+  }
   function renderPlan() {
+    renderPlanMissions();
     const main = $("plan-main"); if (!main) return;
     const ae = document.activeElement, fk = ae && ae.dataset ? (ae.dataset.pid ? `[data-pid="${ae.dataset.pid}"]` : ae.dataset.more ? `[data-more="${ae.dataset.more}"]` : ae.dataset.day ? `[data-day="${ae.dataset.day}"]` : null) : null;
     const today = planToday();
@@ -3637,7 +3711,7 @@ body {
       nbox.append(h("div", { class: "pn-h" }, h("span", { class: "sub", text: "Next up" }), when ? h("span", { class: "pn-w" + (when === "overdue" ? " late" : ""), text: when }) : null),
         h("div", { class: "pn-t" }, h("b", { text: nx.t }), h("span", { text: nx.title })),
         h("button", { class: "btn pri", type: "button", text: "Mark done", onclick: () => planSet(k, nx.id, true) }),
-        missed ? h("span", { class: "small", text: `${missed} earlier item${missed === 1 ? "" : "s"} not ticked` }) : null);
+        missed ? h("span", { class: "small", text: `${missed} earlier item${missed === 1 ? "" : "s"} not ticked` }) : "");
     } else if (isToday) nbox.append(h("p", { class: "note", text: done === plan.total ? "Everything ticked. Strong day, Gil." : "Only the all-day goals are left." }));
     // week strip, Monday to Sunday
     const t = fromKey(today), mon = addDays(t, -((t.getDay() + 6) % 7));
@@ -4580,8 +4654,66 @@ body {
   }
   function toolsFor(biz) { const sel = $("mcp-biz"); if (sel && BIZ[biz]) sel.value = biz; const n = $("mcp-name"); if (n) setTimeout(() => n.focus(), 50); }
 
+  // ---------- focus mode: one thing on screen, a 25-minute timer ----------
+  const FOCUS = { on: false, end: 0, timer: 0, last: null };
+  function focusItem() {
+    const k = planToday(), p = RS.build(fromKey(k)), nx = planNext(k, p);
+    const open = planOpen(k, p), i = nx ? open.indexOf(nx) : -1;
+    return { k, nx, after: i >= 0 ? open[i + 1] || null : null };
+  }
+  function renderFocus() {
+    if (!FOCUS.on) return;
+    const d = new Date();
+    $("focus-clock").textContent = hm(d);
+    const { nx, after } = focusItem(), nn = nowNext(events());
+    if (nx) {
+      $("focus-when").textContent = minsOf(nx.t) != null ? `Run-sheet · ${nx.t}` : "Run-sheet";
+      $("focus-t").textContent = nx.title; $("focus-sub").textContent = nx.sub || "";
+    } else if (nn.now || nn.next) {
+      const e = nn.now || nn.next;
+      $("focus-when").textContent = nn.now ? `Now · until ${hm(e.end)}` : `Next · ${hm(e.start)}`;
+      $("focus-t").textContent = e.title; $("focus-sub").textContent = "";
+    } else { $("focus-when").textContent = ""; $("focus-t").textContent = "Nothing scheduled"; $("focus-sub").textContent = "Pick one thing and start the timer."; }
+    $("focus-done").hidden = !nx;
+    $("focus-next").textContent = after ? `After that: ${after.t} ${after.title}` : "";
+    const left = FOCUS.end ? Math.max(0, FOCUS.end - Date.now()) : 25 * 60000;
+    $("focus-left").textContent = `${pad(Math.floor(left / 60000))}:${pad(Math.floor(left / 1000) % 60)}`;
+    $("focus-go").textContent = FOCUS.end ? "Stop timer" : "Start 25 min";
+    $("focus-tsub").textContent = FOCUS.end ? (left ? "Focus block running" : "Time's up. Take a 5-minute break.") : "25-minute focus block";
+    if (FOCUS.end && !left) { FOCUS.end = 0; sfx.blip(); }
+  }
+  function focusOpen() {
+    FOCUS.on = true; FOCUS.last = document.activeElement;
+    $("focus").hidden = false; document.body.classList.add("focusing");
+    clearInterval(FOCUS.timer); FOCUS.timer = setInterval(renderFocus, 1000);
+    renderFocus(); $("focus-go").focus();
+  }
+  function focusClose() {
+    if (!FOCUS.on) return;
+    FOCUS.on = false; clearInterval(FOCUS.timer);
+    $("focus").hidden = true; document.body.classList.remove("focusing");
+    if (FOCUS.last && FOCUS.last.focus) FOCUS.last.focus();
+  }
+  function wireFocus() {
+    $("btn-focus").addEventListener("click", focusOpen);
+    $("focus-exit").addEventListener("click", focusClose);
+    $("focus-go").addEventListener("click", () => { FOCUS.end = FOCUS.end ? 0 : Date.now() + 25 * 60000; renderFocus(); });
+    $("focus-done").addEventListener("click", () => { const { k, nx } = focusItem(); if (nx) planSet(k, nx.id, true); renderFocus(); });
+    document.addEventListener("keydown", (e) => {
+      if (!FOCUS.on) return;
+      if (e.key === "Escape") { e.preventDefault(); focusClose(); }
+      else if (e.key === "Tab") {
+        const f = [...$("focus").querySelectorAll("button:not([hidden])")];
+        if (!f.length) return;
+        const i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+      }
+    });
+  }
+
   // ---------- tabs ----------
-  const VIEWS = ["dash", "plan", "command", "jarvis", "health", "business", "inbox", "tools"];
+  const VIEWS = ["dash", "jarvis", "plan", "command", "tools", "health", "business", "inbox"];
   const VIEW_KEY = IS_S2 ? "jarvis.view.s2" : "jarvis.view";
   function showView(v, focus, biz) {
     if (!VIEWS.includes(v)) v = "dash";
@@ -4625,7 +4757,7 @@ body {
   if (IS_S2) { $("s2tag").hidden = false; $("btn-s2").hidden = true; document.title = "Jarvis · Display 2"; }
   $("btn-s2").addEventListener("click", () => openScreen2());
   chatLoad(); planLoadLocal(); progLoadLocal(); mcpLoad();
-  buildDial(); wireCmd(); wireVoice(); wireChat(); wireDash(); wireSettings(); wireBrain(); wirePower(); wireLink(); wireCC(); wireTools(); renderTools();
+  buildDial(); wireCmd(); wireVoice(); wireChat(); wireDash(); wireSettings(); wireBrain(); wirePower(); wireLink(); wireCC(); wireTools(); renderTools(); wireFocus();
   wireTabs();
   dayKey = keyOf(S.now);
   applyPrefs();
