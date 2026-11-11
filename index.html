@@ -1090,8 +1090,8 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
   }
   function category(title) {
     const t = (title || "").toLowerCase();
-    if (/workout|gym|strength|calisthen|yoga|walk|stretch|run|train|sauna|swim|bike/.test(t)) return "move";
-    if (/breakfast|lunch|dinner|snack|meal|protein|eat/.test(t)) return "food";
+    if (/workout|gym|strength|calisthen|yoga|walk|stretch|run|train|sauna|swim|bike|cardio|\bmma\b/.test(t)) return "move";
+    if (/breakfast|lunch|dinner|snack|meal|protein|eat|shake/.test(t)) return "food";
     if (/work|hustler|study|universit|client|call|meeting|studio|music/.test(t)) return "work";
     return "other";
   }
@@ -1606,10 +1606,13 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
   function trainingToday(evs) {
     if (!S.cal) return "—";
     const titles = evs.map((e) => e.title.toLowerCase());
-    if (titles.some((t) => /strength|gym/.test(t))) return "Strength · gym";
-    if (titles.some((t) => /calisthen/.test(t))) return "Calisthenics · home";
-    if (titles.some((t) => /run|bike|swim|cardio/.test(t))) return "Cardio";
-    return "Rest · mobility + sauna";
+    const has = (re) => titles.some((t) => re.test(t)), parts = [];
+    if (has(/\bmma\b/)) parts.push("MMA");
+    if (has(/strength|gym/)) parts.push("Strength · gym");
+    if (has(/calisthen/)) parts.push("Calisthenics · home");
+    if (has(/^training\b/)) parts.push("Legs + ski");
+    if (has(/run|bike|swim|cardio/)) parts.push("Cardio");
+    return parts.length ? parts.join(" + ") : "Rest · recovery";
   }
   function renderHealth(evs) {
     const body = $("health-body"); body.replaceChildren();
@@ -3071,94 +3074,67 @@ dialog.set::backdrop { background: rgba(2, 6, 10, 0.78); -webkit-backdrop-filter
   // Ticks live on this device and sync to a "Schedule" tab in the task sheet (Date | Done ids | Progress), so PC and phone match.
   const FULL_PLAN_URL = "https://claude.ai/code/artifact/29590395-e8b5-491d-98fa-a5bac331aedf";
   const RS = (() => {
-    const YOGA = ["Cat-cow — 10 slow breaths", "Downward dog, pedaling the heels — 1 min", "Half sun salutation: forward fold, halfway lift, plank, cobra, down dog — 3 rounds", "Low lunge with arms up — 45 s per side", "Warrior II into reverse warrior — 30 s per side", "Garland squat, palms together — 45 s", "Seated spinal twist — 30 s per side"];
     const EVENING = ["Child's pose — 60 s", "Hamstring stretch on your back with a towel — 45 s per side", "Figure-4 glute stretch — 45 s per side", "Half-kneeling hip flexor stretch — 45 s per side", "Doorway chest stretch — 45 s", "Lying spinal twist — 45 s per side", "Slow breathing, 4 s in and 6 s out — 2 min"];
-    const STR_A = ["Warm-up: squat hold 60 s, glute bridge × 15, wall slides × 10", "Pair 1: goblet squat 3 × 8–10 + landmine press 3 × 8–10 per arm", "Pair 2: chest-supported row 3 × 10–12 + DB Romanian deadlift 3 × 10", "Pair 3: face pull 3 × 15 + plank 3 × 30–45 s"];
-    const STR_B = ["Warm-up: squat hold 60 s, glute bridge × 15, wall slides × 10", "Pair 1: trap-bar deadlift 3 × 6–8 + incline DB press 3 × 8–10", "Pair 2: lat pulldown 3 × 10–12 + reverse lunge 2 × 10 per leg", "Pair 3: farmer carry 3 × 30 m + dead bug 3 × 10 per side"];
-    const CAL = ["Warm-up: 10 bodyweight squats + 10 incline push-ups", "4 rounds, 90 s rest after each round:", "Push-up (hands on a bench if needed) × 6–12", "Table row or towel door row × 8–12", "Split squat × 8–10 per leg", "Pike push-up × 6–10", "Single-leg glute bridge × 10 per side", "Dead bug × 10 per side", "Finish: plank 2 × 30–45 s, side plank 2 × 20–30 s per side"];
-    const SESSION = {
-      A: { chip: "Strength A", title: "Strength A — 40 min", sub: "Alternate sets in each pair, rest after the pair", details: STR_A },
-      B: { chip: "Strength B", title: "Strength B — 40 min", sub: "Alternate sets in each pair, rest after the pair", details: STR_B },
-      cal: { chip: "Calisthenics", title: "Calisthenics at home — 40 min", sub: "Circuit, 4 rounds", details: CAL },
-      walk: { chip: "Active rest" },
-      rest: { chip: "Prep day" }
-    };
-    const isoWeek = (d) => { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 86400000 + 1) / 7); };
-    // Strength days alternate: odd ISO weeks run A / B / A, even weeks B / A / B.
-    function sessionFor(d) {
-      const w = d.getDay();
-      if (w === 2 || w === 4) return "cal";
-      if (w === 1 || w === 3 || w === 5) { const aFirst = isoWeek(d) % 2 === 1; if (w === 3) return aFirst ? "B" : "A"; return aFirst ? "A" : "B"; }
-      return w === 6 ? "walk" : "rest";
-    }
     const ALL_DAY = { name: "All day", items: [{ id: "water", t: "Day", title: "3 L water" }, { id: "protein", t: "Day", title: "170–190 g protein" }, { id: "steps", t: "Day", title: "8,000+ steps" }] };
+    // Sun–Fri mornings: hand wash, Birkot HaShachar, then Shacharit with the Torah class until about 09:45.
+    const prayer = (sunday) => [
+      { id: "wake", t: "06:45", title: sunday ? "Wake up, Netilat Yadayim" : "Wake up, prayer starts" },
+      sunday ? { id: "weigh", t: "06:50", title: "Weigh in + measure waist", sub: "After the toilet, before water and food · waist at the belly button" } : null,
+      { id: "hands", t: sunday ? "06:55" : "06:50", title: sunday ? "500 ml water" : "Netilat Yadayim + 500 ml water" },
+      { id: "birkot", t: "07:00", title: "Birkot HaShachar" },
+      { id: "shacharit", t: "07:30", title: "Shacharit + Torah class", sub: "Until about 09:45" }];
+    // Weekday training at 11:30 Mon–Thu; Friday is mikveh instead. Evening cardio Mon, Wed, Thu.
+    const CARDIO_DAYS = [1, 3, 4];
     function build(d) {
-      const w = d.getDay(), s = sessionFor(d), info = SESSION[s];
-      let sections;
+      const w = d.getDay();
+      let chip, sections;
       if (w >= 1 && w <= 5) {
-        const strength = s === "A" || s === "B";
+        const fri = w === 5, cardio = CARDIO_DAYS.includes(w);
+        chip = fri ? "Mikveh · no training" : cardio ? "Training + cardio" : "Training";
         sections = [
-          { name: "Morning", items: [
-            { id: "wake", t: "06:30", title: "Wake up, 500 ml water" },
-            { id: "weigh", t: "06:30", title: "Weigh in", sub: "After the toilet, before food" },
-            { id: "tefillin", t: "06:35", title: "Tefillin" },
-            { id: "mob", t: "06:45", title: "Morning yoga — 10 min", sub: strength ? "Banana after it, before the gym" : null, details: YOGA },
-            { id: "train", t: "07:00", title: info.title, sub: info.sub, details: info.details },
-            { id: "bfast", t: "07:45", title: "Breakfast — ~48 g protein", sub: "3 eggs, 200 g cottage, 2 slices bread, salad · creatine 5 g" }] },
+          { name: "Morning", items: prayer(false) },
           { name: "Work", items: [
-            { id: "moves", t: "08–14", title: "Stand and walk 5 min every hour" },
-            { id: "snack", t: "10:30", title: "Snack — ~25 g protein", sub: "Whey shake + apple" }] },
+            { id: "work1", t: "09:45", title: "Emails, client and agent follow-ups", sub: "Hustler's University and clipping in the same block" },
+            { id: "shake", t: "10:00", title: "Morning shake", sub: "Protein, creatine, collagen" },
+            fri ? { id: "mikveh", t: "11:30", title: "Mikveh" }
+              : { id: "train", t: "11:30", title: "Training — 30 min", sub: "Legs + body, then 15 min high-intensity on the ski" },
+            { id: "work2", t: "12:00", title: "Clipping + Hustler's University", sub: "Business on the laptop on the side · until 14:00" }] },
           { name: "Afternoon", items: [
             { id: "lunch", t: "14:00", title: "Lunch — ~60 g protein", sub: "Chicken, rice or potato, big salad · D3 + omega-3" },
             { id: "walk", t: "14:25", title: "Brisk walk — 30 min", sub: "Zone 2: breathing harder, still able to talk" },
-            { id: "hu1", t: "15:00", title: "Hustler's University — block 1", sub: "50 min focus, phone in another room" },
-            { id: "hu2", t: "16:00", title: "Hustler's University — block 2", sub: "50 min focus" }] },
+            cardio ? { id: "cardio", t: "17:30", title: "Evening cardio — 30–40 min", sub: "Bike, run or ski · steady, hard but sustainable" } : null] },
           { name: "Evening", items: [
             { id: "dinner", t: "18:30", title: "Dinner — ~45 g protein", sub: "Fish, turkey or 5% beef, vegetables, tahini" },
-            w !== 5 ? { id: "pack", t: "21:00", title: "Pack gym bag and tomorrow's food" } : null,
+            fri ? null : { id: "pack", t: "21:00", title: "Pack gym bag and tomorrow's food" },
             { id: "stretch", t: "21:30", title: "Evening stretch — 10 min", details: EVENING },
             { id: "mag", t: "22:30", title: "Screens off, magnesium" },
-            { id: "bed", t: "23:00", title: "In bed", sub: w === 5 ? "Tomorrow's wake-up is 07:30" : "7.5 h until 06:30" }] },
+            { id: "bed", t: "23:00", title: "In bed", sub: fri ? "Shabbat tomorrow" : "Wake-up 06:45" }] },
           ALL_DAY];
       } else if (w === 6) {
-        sections = [
-          { name: "Morning", items: [
-            { id: "wake", t: "07:30", title: "Wake up, 500 ml water" },
-            { id: "weigh", t: "07:30", title: "Weigh in", sub: "After the toilet, before food" },
-            { id: "mob", t: "07:45", title: "Yoga — 20 min", sub: "The flow twice, longer holds · no tefillin on Shabbat", details: YOGA },
-            { id: "bfast", t: "08:30", title: "Breakfast — ~48 g protein", sub: "Creatine 5 g" },
-            { id: "longwalk", t: "09:30", title: "Long walk — 60–90 min", sub: "Easy pace" },
-            { id: "snack", t: "11:30", title: "Snack — ~25 g protein" }] },
-          { name: "Afternoon", items: [{ id: "lunch", t: "13:30", title: "Lunch — ~60 g protein", sub: "D3 + omega-3" }] },
-          { name: "Evening", items: [
-            { id: "dinner", t: "19:00", title: "Dinner — relaxed meal of the week", sub: "Enjoy it, back to plan tomorrow" },
-            { id: "stretch", t: "21:30", title: "Evening stretch — 10 min", details: EVENING },
-            { id: "bed", t: "23:30", title: "Magnesium, in bed by 23:30" }] },
-          ALL_DAY];
+        // Shabbat: no schedule, only the all-day goals.
+        chip = "Shabbat";
+        sections = [ALL_DAY];
       } else {
+        chip = "MMA · no work";
         sections = [
-          { name: "Morning", items: [
-            { id: "wake", t: "07:30", title: "Wake up, 500 ml water" },
-            { id: "weigh", t: "07:30", title: "Weigh in", sub: "After the toilet, before food" },
-            { id: "waist", t: "07:30", title: "Measure waist", sub: "At the belly button" },
-            { id: "tefillin", t: "07:35", title: "Tefillin" },
-            { id: "mob", t: "07:45", title: "Yoga 15 min + stretch 10 min", details: YOGA.concat(EVENING) },
-            { id: "bfast", t: "08:30", title: "Breakfast — ~48 g protein", sub: "Creatine 5 g" },
-            { id: "snack", t: "11:30", title: "Snack — ~25 g protein" }] },
+          { name: "Morning", items: prayer(true).concat([
+            { id: "mma", t: "10:00", title: "MMA — 90 min" },
+            { id: "shake", t: "11:45", title: "Shake after MMA", sub: "Protein, creatine, collagen" }]) },
           { name: "Afternoon", items: [
             { id: "lunch", t: "13:30", title: "Lunch — ~60 g protein", sub: "D3 + omega-3" },
             { id: "prep", t: "14:30", title: "Meal prep for Mon–Wed", sub: "1 kg chicken or turkey, 500 g 5% beef, rice, roast vegetables" },
             { id: "review", t: "17:00", title: "Hustler's University weekly review — 1 h", sub: "What you learned, next week's one action" }] },
           { name: "Evening", items: [
             { id: "dinner", t: "19:00", title: "Dinner — ~45 g protein" },
-            { id: "pack", t: "21:00", title: "Pack gym bag for Monday" },
+            { id: "pack", t: "21:00", title: "Pack gym bag and tomorrow's food" },
+            { id: "stretch", t: "21:30", title: "Evening stretch — 10 min", details: EVENING },
             { id: "mag", t: "22:30", title: "Screens off, magnesium" },
-            { id: "bed", t: "23:00", title: "In bed", sub: "7.5 h until 06:30" }] },
+            { id: "bed", t: "23:00", title: "In bed", sub: "Wake-up 06:45" }] },
           ALL_DAY];
       }
       sections.forEach((sec) => { sec.items = sec.items.filter(Boolean); });
       const ids = sections.flatMap((sec) => sec.items.map((it) => it.id));
-      return { chip: info.chip, sections, ids, total: ids.length };
+      return { chip, sections, ids, total: ids.length };
     }
     return { build };
   })();
