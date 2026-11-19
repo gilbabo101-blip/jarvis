@@ -2180,6 +2180,7 @@ body {
     const titles = evs.map((e) => e.title.toLowerCase());
     const has = (re) => titles.some((t) => re.test(t)), parts = [];
     if (has(/\bmma\b/)) parts.push("MMA");
+    if (has(/boxing|functional/)) parts.push("Boxing + functional");
     if (has(/strength|gym/)) parts.push("Strength · gym");
     if (has(/calisthen/)) parts.push("Calisthenics · home");
     if (has(/^training\b/)) parts.push("Legs + ski");
@@ -3682,7 +3683,9 @@ body {
       { id: "hands", t: sunday ? "06:55" : "06:50", title: sunday ? "500 ml water" : "Netilat Yadayim + 500 ml water" },
       { id: "birkot", t: "07:00", title: "Birkot HaShachar" },
       { id: "shacharit", t: "07:30", title: "Shacharit + Torah class", sub: "Until about 09:45" }];
-    // Weekday training at 11:30 Mon–Thu; Friday is mikveh instead. Evening cardio Mon, Wed, Thu.
+    // Weekdays: work 09:45–12:30 (breakfast + shake at the desk, training 11:30 Mon–Thu, mikveh Friday),
+    // prayer 12:30–13:30, work 13:30–14:30, rest 14:30–16:00, then Hustler's University + clipping 16:00–17:30 (Mon–Thu).
+    // Evening cardio Mon, Wed, Thu.
     const CARDIO_DAYS = [1, 3, 4];
     function build(d) {
       const w = d.getDay();
@@ -3693,14 +3696,18 @@ body {
         sections = [
           { name: "Morning", items: prayer(false) },
           { name: "Work", items: [
-            { id: "work1", t: "09:45", title: "Emails, client and agent follow-ups", sub: "Hustler's University and clipping in the same block" },
-            { id: "shake", t: "10:00", title: "Morning shake", sub: "Protein, creatine, collagen" },
+            { id: "work1", t: "09:45", title: "Work: business, Hustler's University and clipping", sub: "Emails, client and agent follow-ups · until 12:30" },
+            { id: "shake", t: "10:00", title: "Breakfast + shake", sub: "At the desk · shake: protein, creatine, collagen" },
             fri ? { id: "mikveh", t: "11:30", title: "Mikveh" }
               : { id: "train", t: "11:30", title: "Training — 30 min", sub: "Legs + body, then 15 min high-intensity on the ski" },
-            { id: "work2", t: "12:00", title: "Clipping + Hustler's University", sub: "Business on the laptop on the side · until 14:00" }] },
+            { id: "work2", t: "12:00", title: "Clipping + Hustler's University", sub: "Business on the laptop on the side · until 12:30" },
+            { id: "pray", t: "12:30", title: "Prayer", sub: "Until 13:30" },
+            { id: "work3", t: "13:30", title: "Back to work: business, Hustler's University and clipping", sub: fri ? "Until 14:30, then Shabbat prep" : "Until 14:30" }] },
           { name: "Afternoon", items: [
-            { id: "lunch", t: "14:00", title: "Lunch — ~60 g protein", sub: "Chicken, rice or potato, big salad · D3 + omega-3" },
-            { id: "walk", t: "14:25", title: "Brisk walk — 30 min", sub: "Zone 2: breathing harder, still able to talk" },
+            fri ? null : { id: "rest", t: "14:30", title: "Rest", sub: "Until 16:00" },
+            { id: "lunch", t: "14:30", title: "Lunch — ~60 g protein", sub: "Chicken, rice or potato, big salad · D3 + omega-3" },
+            { id: "walk", t: "14:55", title: "Brisk walk — 30 min", sub: "Zone 2: breathing harder, still able to talk" },
+            fri ? null : { id: "work4", t: "16:00", title: "Hustler's University + clipping", sub: "Until 17:30" },
             cardio ? { id: "cardio", t: "17:30", title: "Evening cardio — 30–40 min", sub: "Bike, run or ski · steady, hard but sustainable" } : null] },
           { name: "Evening", items: [
             { id: "dinner", t: "18:30", title: "Dinner — ~45 g protein", sub: "Fish, turkey or 5% beef, vegetables, tahini" },
@@ -3714,12 +3721,13 @@ body {
         chip = "Shabbat";
         sections = [ALL_DAY];
       } else {
-        chip = "MMA · no work";
+        chip = "Boxing · no work";
         sections = [
           { name: "Morning", items: prayer(true).concat([
-            { id: "mma", t: "10:00", title: "MMA — 90 min" },
-            { id: "shake", t: "11:45", title: "Shake after MMA", sub: "Protein, creatine, collagen" }]) },
+            { id: "boxing", t: "10:15", title: "Boxing + functional training", sub: "Until 12:00" },
+            { id: "shake", t: "12:00", title: "Shake after training", sub: "Protein, creatine, collagen" }]) },
           { name: "Afternoon", items: [
+            { id: "flex", t: "12:00", title: "Flexible: shopping, haircut or errands", sub: "Modular — use it when something's due, skip it when not" },
             { id: "lunch", t: "13:30", title: "Lunch — ~60 g protein", sub: "D3 + omega-3" },
             { id: "prep", t: "14:30", title: "Meal prep for Mon–Wed", sub: "1 kg chicken or turkey, 500 g 5% beef, rice, roast vegetables" },
             { id: "review", t: "17:00", title: "Hustler's University weekly review — 1 h", sub: "What you learned, next week's one action" }] },
